@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Blessings — Connect. Give. Receive.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FAF6EF;
+    --warm-white: #FDF9F4;
+    --gold: #C49A3C;
+    --gold-light: #E8C97A;
+    --amber: #D4854A;
+    --deep: #1C1410;
+    --mid: #5C4A35;
+    --soft: #9C8870;
+    --give-color: #C49A3C;
+    --receive-color: #7B9E87;
+    --sage: #7B9E87;
+    --sage-light: #A8C4B0;
+    --bg-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background-color: var(--cream);
+    color: var(--deep);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── GRAIN OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: var(--bg-noise);
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.5;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.4rem 3rem;
+    background: rgba(250, 246, 239, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196, 154, 60, 0.15);
+  }
+
+  .nav-logo {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--deep);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--gold); }
+
+  .nav-links {
+    display: flex;
+    gap: 2.5rem;
+    list-style: none;
+  }
+
+  .nav-links a {
+    text-decoration: none;
+    color: var(--mid);
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--gold); }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 8rem 2rem 4rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 20%, rgba(196,154,60,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 50% at 80% 80%, rgba(123,158,135,0.1) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 20% 70%, rgba(212,133,74,0.08) 0%, transparent 60%);
+  }
+
+  .hero-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    animation: drift 12s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+
+  .hero-orb-1 {
+    width: 500px; height: 500px;
+    background: rgba(196,154,60,0.08);
+    top: -100px; left: -150px;
+    animation-delay: 0s;
+  }
+
+  .hero-orb-2 {
+    width: 400px; height: 400px;
+    background: rgba(123,158,135,0.09);
+    bottom: -80px; right: -100px;
+    animation-delay: -6s;
+  }
+
+  @keyframes drift {
+    from { transform: translate(0, 0) scale(1); }
+    to { transform: translate(40px, 30px) scale(1.05); }
+  }
+
+  .hero-eyebrow {
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.2s forwards;
+  }
+
+  .hero-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(3.5rem, 9vw, 8rem);
+    font-weight: 300;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--deep);
+    margin-bottom: 1rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.4s forwards;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .hero-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    font-weight: 300;
+    font-style: italic;
+    color: var(--mid);
+    max-width: 560px;
+    line-height: 1.6;
+    margin-bottom: 3.5rem;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.6s forwards;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── CTA BUTTONS ── */
+  .cta-buttons {
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 0.8s forwards;
+  }
+
+  .btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 1.1rem 2.8rem;
+    border-radius: 100px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    border: none;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 100px;
+    background: rgba(255,255,255,0.15);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover::after { opacity: 1; }
+
+  .btn-give {
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    color: white;
+    box-shadow: 0 4px 24px rgba(196,154,60,0.35), 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .btn-give:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(196,154,60,0.45), 0 2px 6px rgba(0,0,0,0.12);
+  }
+
+  .btn-receive {
+    background: linear-gradient(135deg, var(--sage), #5C8870);
+    color: white;
+    box-shadow: 0 4px 24px rgba(123,158,135,0.35), 0 1px 3px rgba(0,0,0,0.1);
+  }
+
+  .btn-receive:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(123,158,135,0.45), 0 2px 6px rgba(0,0,0,0.12);
+  }
+
+  .btn-icon { font-size: 1.2rem; }
+
+  /* ── SCROLL INDICATOR ── */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--soft);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.4s forwards;
+  }
+
+  .scroll-line {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, var(--gold), transparent);
+    animation: scrollPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% { transform: scaleY(1); opacity: 0.6; }
+    50% { transform: scaleY(0.6); opacity: 1; }
+  }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    background: var(--deep);
+    padding: 1.8rem 3rem;
+    display: flex;
+    justify-content: center;
+    gap: 5rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    text-align: center;
+    color: white;
+  }
+
+  .stat-number {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 600;
+    color: var(--gold-light);
+    display: block;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    margin-top: 0.2rem;
+  }
+
+  /* ── SECTION BASE ── */
+  section { padding: 7rem 2rem; }
+
+  .section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.72rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 500;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .section-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 300;
+    line-height: 1.15;
+    color: var(--deep);
+    margin-bottom: 1.5rem;
+  }
+
+  .section-title em { font-style: italic; color: var(--gold); }
+
+  .section-body {
+    font-size: 1rem;
+    line-height: 1.8;
+    color: var(--mid);
+    max-width: 640px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .how-section { background: var(--warm-white); }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+    margin-top: 4rem;
+  }
+
+  .step-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2.2rem;
+    border: 1px solid rgba(196,154,60,0.12);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .step-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 50px rgba(28,20,16,0.08);
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--amber));
+  }
+
+  .step-card.receive-card::before {
+    background: linear-gradient(90deg, var(--sage), var(--sage-light));
+  }
+
+  .step-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 3.5rem;
+    font-weight: 300;
+    color: rgba(196,154,60,0.18);
+    line-height: 1;
+    margin-bottom: 0.8rem;
+  }
+
+  .step-card.receive-card .step-num { color: rgba(123,158,135,0.2); }
+
+  .step-icon { font-size: 1.8rem; margin-bottom: 0.8rem; display: block; }
+
+  .step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin-bottom: 0.6rem;
+    color: var(--deep);
+  }
+
+  .step-desc {
+    font-size: 0.9rem;
+    line-height: 1.7;
+    color: var(--mid);
+  }
+
+  /* ── BLESSING TYPES ── */
+  .blessing-types-section { background: var(--cream); }
+
+  .blessing-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.2rem;
+    margin-top: 3.5rem;
+  }
+
+  .blessing-type {
+    background: white;
+    border-radius: 16px;
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    border: 1px solid rgba(196,154,60,0.12);
+    transition: all 0.25s ease;
+    cursor: default;
+  }
+
+  .blessing-type:hover {
+    border-color: var(--gold);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px rgba(196,154,60,0.12);
+  }
+
+  .blessing-type-icon { font-size: 2.2rem; margin-bottom: 0.8rem; display: block; }
+
+  .blessing-type-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--deep);
+    margin-bottom: 0.4rem;
+  }
+
+  .blessing-type-desc {
+    font-size: 0.8rem;
+    color: var(--soft);
+    line-height: 1.5;
+  }
+
+  /* ── MATCHING MODAL SECTION ── */
+  .action-section {
+    background: var(--deep);
+    text-align: center;
+    padding: 8rem 2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .action-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 70% at 30% 50%, rgba(196,154,60,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 50% 60% at 70% 50%, rgba(123,158,135,0.08) 0%, transparent 70%);
+  }
+
+  .action-section .section-title { color: var(--cream); }
+  .action-section .section-body { color: rgba(250,246,239,0.6); margin: 0 auto 3.5rem; }
+  .action-section .section-label { color: var(--gold-light); }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(28,20,16,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .modal-overlay.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--warm-white);
+    border-radius: 24px;
+    padding: 3rem;
+    max-width: 560px;
+    width: 100%;
+    position: relative;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border: 1px solid rgba(196,154,60,0.15);
+    box-shadow: 0 40px 80px rgba(28,20,16,0.25);
+  }
+
+  .modal-overlay.active .modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 1.2rem; right: 1.5rem;
+    background: none;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--soft);
+    cursor: pointer;
+    transition: color 0.2s;
+    line-height: 1;
+  }
+
+  .modal-close:hover { color: var(--deep); }
+
+  .modal-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--deep);
+    margin-bottom: 0.5rem;
+  }
+
+  .modal-subtitle {
+    font-size: 0.9rem;
+    color: var(--soft);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  /* STEP-based modal flow */
+  .modal-step { display: none; }
+  .modal-step.active { display: block; }
+
+  .form-group {
+    margin-bottom: 1.4rem;
+  }
+
+  .form-label {
+    display: block;
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--mid);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 0.85rem 1.1rem;
+    border: 1.5px solid rgba(196,154,60,0.2);
+    border-radius: 12px;
+    background: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--deep);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    appearance: none;
+  }
+
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(196,154,60,0.1);
+  }
+
+  .form-textarea { resize: vertical; min-height: 90px; }
+
+  .blessing-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+  }
+
+  .blessing-option {
+    padding: 0.9rem;
+    border: 1.5px solid rgba(196,154,60,0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: center;
+    background: white;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .blessing-option:hover, .blessing-option.selected {
+    border-color: var(--gold);
+    background: rgba(196,154,60,0.05);
+  }
+
+  .blessing-option-icon { font-size: 1.4rem; display: block; margin-bottom: 0.3rem; }
+  .blessing-option-name { font-size: 0.8rem; font-weight: 500; color: var(--deep); }
+
+  /* receive variant */
+  .receive-mode .blessing-option:hover,
+  .receive-mode .blessing-option.selected {
+    border-color: var(--sage);
+    background: rgba(123,158,135,0.06);
+  }
+
+  .receive-mode .form-input:focus,
+  .receive-mode .form-select:focus,
+  .receive-mode .form-textarea:focus {
+    border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(123,158,135,0.1);
+  }
+
+  /* ── MATCHING ANIMATION ── */
+  .matching-screen {
+    text-align: center;
+    padding: 1rem 0;
+  }
+
+  .matching-globe {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1.5rem;
+    position: relative;
+  }
+
+  .globe-ring {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    border: 2px solid;
+    animation: ringPulse 1.5s ease-in-out infinite;
+  }
+
+  .globe-ring-1 { border-color: rgba(196,154,60,0.7); animation-delay: 0s; }
+  .globe-ring-2 { border-color: rgba(196,154,60,0.4); animation-delay: 0.3s; inset: -12px; }
+  .globe-ring-3 { border-color: rgba(196,154,60,0.2); animation-delay: 0.6s; inset: -24px; }
+
+  .globe-center {
+    position: absolute;
+    inset: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    animation: rotateSlow 8s linear infinite;
+  }
+
+  .receive-mode .globe-ring-1 { border-color: rgba(123,158,135,0.7); }
+  .receive-mode .globe-ring-2 { border-color: rgba(123,158,135,0.4); }
+  .receive-mode .globe-ring-3 { border-color: rgba(123,158,135,0.2); }
+  .receive-mode .globe-center { background: linear-gradient(135deg, var(--sage), #5C8870); }
+
+  @keyframes ringPulse {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 0.4; }
+  }
+
+  @keyframes rotateSlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .matching-status {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    color: var(--deep);
+    margin-bottom: 0.5rem;
+  }
+
+  .matching-sub {
+    font-size: 0.85rem;
+    color: var(--soft);
+  }
+
+  /* ── CONNECTED SCREEN ── */
+  .connected-card {
+    background: linear-gradient(135deg, rgba(196,154,60,0.08), rgba(212,133,74,0.05));
+    border: 1.5px solid rgba(196,154,60,0.2);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+  }
+
+  .receive-mode .connected-card {
+    background: linear-gradient(135deg, rgba(123,158,135,0.08), rgba(123,158,135,0.04));
+    border-color: rgba(123,158,135,0.2);
+  }
+
+  .avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+  }
+
+  .receive-mode .avatar {
+    background: linear-gradient(135deg, var(--sage), #5C8870);
+  }
+
+  .user-info-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--deep);
+  }
+
+  .user-info-loc {
+    font-size: 0.8rem;
+    color: var(--soft);
+    margin-top: 0.2rem;
+  }
+
+  .modal-btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.6rem;
+  }
+
+  .modal-btn-primary {
+    background: linear-gradient(135deg, var(--gold), var(--amber));
+    color: white;
+    box-shadow: 0 4px 16px rgba(196,154,60,0.3);
+  }
+
+  .modal-btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(196,154,60,0.4);
+  }
+
+  .modal-btn-receive {
+    background: linear-gradient(135deg, var(--sage), #5C8870);
+    color: white;
+    box-shadow: 0 4px 16px rgba(123,158,135,0.3);
+  }
+
+  .modal-btn-receive:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(123,158,135,0.4);
+  }
+
+  .modal-btn-ghost {
+    background: transparent;
+    color: var(--soft);
+    border: 1.5px solid rgba(196,154,60,0.2);
+  }
+
+  .modal-btn-ghost:hover { color: var(--mid); border-color: var(--gold); }
+
+  /* ── PHILOSOPHY SECTION ── */
+  .philosophy-section {
+    background: var(--cream);
+    position: relative;
+  }
+
+  .philosophy-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5rem;
+    align-items: center;
+    margin-top: 2rem;
+  }
+
+  .philosophy-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+    font-weight: 300;
+    font-style: italic;
+    line-height: 1.35;
+    color: var(--deep);
+  }
+
+  .philosophy-quote em { color: var(--gold); font-style: normal; }
+
+  .philosophy-pillars {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .pillar {
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+  }
+
+  .pillar-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: rgba(196,154,60,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .pillar-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--deep);
+    margin-bottom: 0.25rem;
+  }
+
+  .pillar-desc {
+    font-size: 0.88rem;
+    color: var(--soft);
+    line-height: 1.65;
+  }
+
+  /* ── STORIES SECTION ── */
+  .stories-section { background: var(--warm-white); }
+
+  .stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 3.5rem;
+  }
+
+  .story-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    border: 1px solid rgba(196,154,60,0.1);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .story-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 40px rgba(28,20,16,0.07);
+  }
+
+  .story-quote {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--mid);
+    line-height: 1.65;
+    margin-bottom: 1.2rem;
+  }
+
+  .story-quote::before { content: '\201C'; color: var(--gold); font-size: 2rem; line-height: 0; vertical-align: -0.4em; margin-right: 0.2em; }
+
+  .story-author {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .story-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, var(--gold-light), var(--amber));
+  }
+
+  .story-name {
+    font-weight: 500;
+    font-size: 0.88rem;
+    color: var(--deep);
+  }
+
+  .story-loc {
+    font-size: 0.75rem;
+    color: var(--soft);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--deep);
+    padding: 4rem 3rem 2.5rem;
+    color: rgba(250,246,239,0.6);
+  }
+
+  .footer-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .footer-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 3rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(250,246,239,0.1);
+  }
+
+  .footer-brand .nav-logo { color: var(--cream); }
+  .footer-tagline {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1rem;
+    color: rgba(250,246,239,0.4);
+    margin-top: 0.5rem;
+    max-width: 260px;
+  }
+
+  .footer-links-group h4 {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold-light);
+    margin-bottom: 1rem;
+  }
+
+  .footer-links-group ul { list-style: none; }
+  .footer-links-group ul li { margin-bottom: 0.6rem; }
+  .footer-links-group ul a {
+    text-decoration: none;
+    color: rgba(250,246,239,0.5);
+    font-size: 0.88rem;
+    transition: color 0.2s;
+  }
+  .footer-links-group ul a:hover { color: var(--gold-light); }
+
+  .footer-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-size: 0.78rem;
+  }
+
+  .footer-heart { color: var(--amber); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 1.2rem 1.5rem; }
+    .nav-links { display: none; }
+    .philosophy-grid { grid-template-columns: 1fr; gap: 2.5rem; }
+    .stats-bar { gap: 2.5rem; }
+    .modal { padding: 2rem 1.5rem; }
+    .blessing-options { grid-template-columns: 1fr 1fr; }
+    .footer-top { flex-direction: column; }
+  }
+
+  /* ── SUCCESS ANIMATION ── */
+  .success-burst {
+    font-size: 4rem;
+    animation: burst 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    display: block;
+    margin-bottom: 1rem;
+  }
+
+  @keyframes burst {
+    from { transform: scale(0) rotate(-20deg); opacity: 0; }
+    to { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .tag-pill {
+    display: inline-block;
+    padding: 0.3rem 0.9rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    background: rgba(196,154,60,0.12);
+    color: var(--gold);
+    border: 1px solid rgba(196,154,60,0.25);
+    margin: 0.2rem;
+  }
+
+  .char-count {
+    font-size: 0.75rem;
+    color: var(--soft);
+    text-align: right;
+    margin-top: 0.3rem;
+  }
+
+  /* Safety / Trust section */
+  .trust-bar {
+    background: var(--warm-white);
+    border-top: 1px solid rgba(196,154,60,0.1);
+    border-bottom: 1px solid rgba(196,154,60,0.1);
+    padding: 2rem 3rem;
+    display: flex;
+    justify-content: center;
+    gap: 4rem;
+    flex-wrap: wrap;
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 0.85rem;
+    color: var(--mid);
+  }
+
+  .trust-item span:first-child { font-size: 1.1rem; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#"><span>✦</span> Blessings</a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#types">Blessings</a></li>
+    <li><a href="#stories">Stories</a></li>
+    <li><a href="#action">Get started</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+
+  <p class="hero-eyebrow">A global circle of kindness</p>
+  <h1 class="hero-title">Give &amp; Receive<br><em>Blessings</em></h1>
+  <p class="hero-subtitle">Connect with a stranger across the world. Give something meaningful. Receive something unexpected. Reignite trust in humanity — one blessing at a time.</p>
+
+  <div class="cta-buttons">
+    <button class="btn btn-give" onclick="openModal('give')">
+      <span class="btn-icon">✦</span> Give a Blessing
+    </button>
+    <button class="btn btn-receive" onclick="openModal('receive')">
+      <span class="btn-icon">🌿</span> Receive a Blessing
+    </button>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Discover more</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-number" data-target="12847">0</span>
+    <span class="stat-label">Blessings given</span>
+  </div>
+  <div class="stat">
+    <span class="stat-number" data-target="94">0</span>
+    <span class="stat-label">Countries connected</span>
+  </div>
+  <div class="stat">
+    <span class="stat-number" data-target="98">0</span>
+    <span class="stat-label">% feel more hopeful</span>
+  </div>
+  <div class="stat">
+    <span class="stat-number" data-target="3261">0</span>
+    <span class="stat-label">Ongoing connections</span>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="section-inner">
+    <span class="section-label">How it works</span>
+    <h2 class="section-title">Simple, <em>meaningful,</em><br>and always safe</h2>
+    <p class="section-body">Blessings is built on one idea: every act of giving creates a ripple. You give, they receive — and when ready, they pass it forward to someone new.</p>
+
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">01</div>
+        <span class="step-icon">✦</span>
+        <div class="step-title">Choose to Give</div>
+        <p class="step-desc">Select what you'd like to offer — a heartfelt message, a skill, a small gift, or simply your presence. Every blessing counts, no matter the size.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">02</div>
+        <span class="step-icon">🌍</span>
+        <div class="step-title">We Find Your Match</div>
+        <p class="step-desc">Our system connects you with someone across the globe who has opened themselves to receiving. Anonymous, safe, and thoughtfully matched.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">03</div>
+        <span class="step-icon">🕊️</span>
+        <div class="step-title">The Blessing Flows</div>
+        <p class="step-desc">You send your blessing through our secure platform. The receiver experiences something unexpected and uplifting — from a real human being.</p>
+      </div>
+      <div class="step-card receive-card">
+        <div class="step-num">04</div>
+        <span class="step-icon">🌿</span>
+        <div class="step-title">The Cycle Continues</div>
+        <p class="step-desc">After receiving, the recipient is gently invited to give — to someone else entirely. A chain of kindness, growing one blessing at a time.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust-bar">
+  <div class="trust-item"><span>🔒</span><span>Anonymous until you choose otherwise</span></div>
+  <div class="trust-item"><span>🛡️</span><span>Safe, moderated platform</span></div>
+  <div class="trust-item"><span>💛</span><span>No obligation, ever</span></div>
+  <div class="trust-item"><span>🌐</span><span>Real humans, 94+ countries</span></div>
+</div>
+
+<!-- BLESSING TYPES -->
+<section class="blessing-types-section" id="types">
+  <div class="section-inner">
+    <span class="section-label">What you can give</span>
+    <h2 class="section-title">Every <em>blessing</em> matters</h2>
+    <p class="section-body">Whether you have five minutes or five dollars, there's a blessing waiting to be given. Choose what feels right for you today.</p>
+
+    <div class="blessing-grid">
+      <div class="blessing-type">
+        <span class="blessing-type-icon">💬</span>
+        <div class="blessing-type-name">Words of Warmth</div>
+        <p class="blessing-type-desc">A heartfelt letter, words of encouragement, or simply "you matter"</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">☕</span>
+        <div class="blessing-type-name">Buy a Coffee</div>
+        <p class="blessing-type-desc">Send a small monetary gift via Ko-fi, PayPal, or a gift card</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">🎁</span>
+        <div class="blessing-type-name">Virtual Gift</div>
+        <p class="blessing-type-desc">A digital gift card to Amazon, Spotify, Netflix, or a local store</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">🧠</span>
+        <div class="blessing-type-name">Share a Skill</div>
+        <p class="blessing-type-desc">Offer to review a CV, teach something, or give professional advice</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">🤝</span>
+        <div class="blessing-type-name">Pen Pal Connection</div>
+        <p class="blessing-type-desc">Become someone's ongoing supporter — check in and be present</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">🎨</span>
+        <div class="blessing-type-name">Creative Gift</div>
+        <p class="blessing-type-desc">Share a drawing, poem, playlist, or piece of art you created</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">📖</span>
+        <div class="blessing-type-name">Book or Course</div>
+        <p class="blessing-type-desc">Gift a life-changing book, ebook, or online course access</p>
+      </div>
+      <div class="blessing-type">
+        <span class="blessing-type-icon">🌟</span>
+        <div class="blessing-type-name">Your Blessing</div>
+        <p class="blessing-type-desc">Have something unique to offer? We celebrate every form of giving</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section class="philosophy-section">
+  <div class="section-inner">
+    <div class="philosophy-grid">
+      <div>
+        <span class="section-label">Our belief</span>
+        <p class="philosophy-quote">"When one person gives freely, and another receives with gratitude — <em>trust</em> is rebuilt, one heart at a time."</p>
+      </div>
+      <div class="philosophy-pillars">
+        <div class="pillar">
+          <div class="pillar-icon">🤲</div>
+          <div>
+            <div class="pillar-title">Radical Generosity</div>
+            <p class="pillar-desc">We believe giving without expectation is the most powerful force for human connection in the world today.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🛡️</div>
+          <div>
+            <div class="pillar-title">Safety First, Always</div>
+            <p class="pillar-desc">Every interaction is moderated. You control what you share. No personal details are ever exchanged without consent.</p>
+          </div>
+        </div>
+        <div class="pillar">
+          <div class="pillar-icon">🌱</div>
+          <div>
+            <div class="pillar-title">A Chain of Good</div>
+            <p class="pillar-desc">Receivers become givers. The blessing never stops — it multiplies across continents and communities.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORIES -->
+<section class="stories-section" id="stories">
+  <div class="section-inner">
+    <span class="section-label">Real connections</span>
+    <h2 class="section-title">Stories that <em>stay</em> with you</h2>
+    <p class="section-body">Every blessing creates a story. Here are a few from our growing community.</p>
+
+    <div class="stories-grid">
+      <div class="story-card">
+        <p class="story-quote">I received a message from someone in Brazil that said "You are not invisible." I had been struggling for months. I printed it and put it on my wall.</p>
+        <div class="story-author">
+          <div class="story-avatar">🌸</div>
+          <div>
+            <div class="story-name">Sarah M.</div>
+            <div class="story-loc">Manchester, UK</div>
+          </div>
+        </div>
+      </div>
+      <div class="story-card">
+        <p class="story-quote">I gave my first blessing — a coffee gift card — to someone in South Korea. They sent me back the most beautiful poem a week later. I still read it.</p>
+        <div class="story-author">
+          <div class="story-avatar">🌊</div>
+          <div>
+            <div class="story-name">Tariq H.</div>
+            <div class="story-loc">Gold Coast, Australia</div>
+          </div>
+        </div>
+      </div>
+      <div class="story-card">
+        <p class="story-quote">Giving helped me as much as the person receiving. I'd been so closed off. Now I feel like I'm part of something bigger than myself again.</p>
+        <div class="story-author">
+          <div class="story-avatar">✨</div>
+          <div>
+            <div class="story-name">Maria L.</div>
+            <div class="story-loc">São Paulo, Brazil</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTION SECTION -->
+<section class="action-section" id="action">
+  <div class="action-bg"></div>
+  <div class="section-inner" style="position:relative;">
+    <span class="section-label">Ready?</span>
+    <h2 class="section-title">Someone is waiting<br>for <em>your</em> blessing</h2>
+    <p class="section-body">Right now, somewhere in the world, someone opened this site hoping to feel less alone. Be the reason they smile today.</p>
+
+    <div class="cta-buttons" style="opacity:1;animation:none;">
+      <button class="btn btn-give" onclick="openModal('give')">
+        <span class="btn-icon">✦</span> Give a Blessing
+      </button>
+      <button class="btn btn-receive" onclick="openModal('receive')">
+        <span class="btn-icon">🌿</span> Receive a Blessing
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a class="nav-logo" href="#"><span style="color:var(--gold-light)">✦</span> Blessings</a>
+        <p class="footer-tagline">Reigniting trust between humans, one blessing at a time.</p>
+      </div>
+      <div class="footer-links-group">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#how">How it works</a></li>
+          <li><a href="#types">Types of blessings</a></li>
+          <li><a href="#stories">Stories</a></li>
+          <li><a href="#">Safety guide</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-group">
+        <h4>Organisation</h4>
+        <ul>
+          <li><a href="#">Our mission</a></li>
+          <li><a href="#">Partner with us</a></li>
+          <li><a href="#">Press</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+      </div>
+      <div class="footer-links-group">
+        <h4>Trust & Safety</h4>
+        <ul>
+          <li><a href="#">Privacy policy</a></li>
+          <li><a href="#">Terms of use</a></li>
+          <li><a href="#">Community guidelines</a></li>
+          <li><a href="#">Report an issue</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2025 Blessings. Made with <span class="footer-heart">♥</span> for humanity.</span>
+      <span>A not-for-profit initiative</span>
+    </div>
+  </div>
+</footer>
+
+<!-- ══════════════════════════════════ MODAL ══════════════════════════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" id="mainModal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+
+    <!-- ════════ GIVE FLOW ════════ -->
+    <div id="giveFlow">
+      <!-- Step 1: Choose blessing type -->
+      <div class="modal-step active" id="give-s1">
+        <span class="modal-icon">✦</span>
+        <div class="modal-title">Give a Blessing</div>
+        <p class="modal-subtitle">Choose what you'd like to offer to someone who needs it.</p>
+
+        <div class="form-group">
+          <label class="form-label">What would you like to give?</label>
+          <div class="blessing-options" id="giveOptions">
+            <div class="blessing-option" onclick="selectBlessingType(this, 'give')" data-type="words">
+              <span class="blessing-option-icon">💬</span>
+              <div class="blessing-option-name">Words</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'give')" data-type="coffee">
+              <span class="blessing-option-icon">☕</span>
+              <div class="blessing-option-name">Buy a coffee</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'give')" data-type="gift">
+              <span class="blessing-option-icon">🎁</span>
+              <div class="blessing-option-name">Virtual gift</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'give')" data-type="skill">
+              <span class="blessing-option-icon">🧠</span>
+              <div class="blessing-option-name">Share a skill</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'give')" data-type="penpal">
+              <span class="blessing-option-icon">🤝</span>
+              <div class="blessing-option-name">Pen pal</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'give')" data-type="creative">
+              <span class="blessing-option-icon">🎨</span>
+              <div class="blessing-option-name">Creative gift</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" id="giveMessageGroup" style="display:none">
+          <label class="form-label">Your blessing message</label>
+          <textarea class="form-textarea" id="giveMessage" maxlength="500" placeholder="Write from the heart. This person may never have received a kind word from a stranger..." oninput="updateCharCount()"></textarea>
+          <div class="char-count"><span id="charCount">0</span>/500</div>
+        </div>
+
+        <div class="form-group" id="giveAnonymous">
+          <label class="form-label">Your first name (optional)</label>
+          <input type="text" class="form-input" id="giveName" placeholder="Leave blank to stay anonymous" />
+        </div>
+
+        <button class="modal-btn modal-btn-primary" onclick="nextStep('give', 2)" id="giveNextBtn" disabled>
+          Find someone to bless →
+        </button>
+      </div>
+
+      <!-- Step 2: Matching -->
+      <div class="modal-step" id="give-s2">
+        <div class="matching-screen">
+          <div class="matching-globe">
+            <div class="globe-ring globe-ring-1"></div>
+            <div class="globe-ring globe-ring-2"></div>
+            <div class="globe-ring globe-ring-3"></div>
+            <div class="globe-center">🌍</div>
+          </div>
+          <div class="matching-status">Finding your recipient…</div>
+          <p class="matching-sub">Searching across 94 countries for someone ready to receive</p>
+        </div>
+      </div>
+
+      <!-- Step 3: Connected -->
+      <div class="modal-step" id="give-s3">
+        <span class="modal-icon">✨</span>
+        <div class="modal-title">Match found!</div>
+        <p class="modal-subtitle">You've been connected with someone who opened their heart to receive today.</p>
+
+        <div class="connected-card">
+          <div class="avatar">🌸</div>
+          <div>
+            <div class="user-info-name" id="recipientName">Anonymous Soul</div>
+            <div class="user-info-loc" id="recipientLoc">📍 Somewhere in the world</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div style="font-size:0.82rem;color:var(--soft);line-height:1.65;margin-bottom:0.8rem;">
+            Your blessing will be delivered securely through our platform. The recipient will not see your personal details unless you choose to share them.
+          </div>
+          <div>
+            <span class="tag-pill">🔒 Anonymous delivery</span>
+            <span class="tag-pill">🌿 Moderated</span>
+            <span class="tag-pill">💛 No reply required</span>
+          </div>
+        </div>
+
+        <button class="modal-btn modal-btn-primary" onclick="sendBlessing()">
+          ✦ Send my blessing
+        </button>
+        <button class="modal-btn modal-btn-ghost" onclick="closeModal()" style="margin-top:0.5rem;">
+          Not ready yet
+        </button>
+      </div>
+
+      <!-- Step 4: Sent! -->
+      <div class="modal-step" id="give-s4">
+        <div style="text-align:center;padding:1rem 0;">
+          <span class="success-burst">✦</span>
+          <div class="modal-title" style="margin-bottom:0.5rem;">Blessing sent! 🌟</div>
+          <p class="modal-subtitle">Your kindness is on its way to someone who needed it today. Thank you for being part of something beautiful.</p>
+          <div style="background:rgba(196,154,60,0.08);border-radius:16px;padding:1.2rem;margin:1.5rem 0;text-align:left;">
+            <div style="font-size:0.8rem;color:var(--soft);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Your blessing</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:var(--mid)" id="blessingSent"></div>
+          </div>
+          <p style="font-size:0.85rem;color:var(--soft);line-height:1.6;">When your recipient is ready, they may pass a blessing forward — to someone entirely new. The circle continues. 🌱</p>
+          <button class="modal-btn modal-btn-primary" onclick="closeModal()" style="margin-top:1.5rem;">Done ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════ RECEIVE FLOW ════════ -->
+    <div id="receiveFlow" style="display:none;">
+      <div class="modal-step active receive-mode" id="receive-s1">
+        <span class="modal-icon">🌿</span>
+        <div class="modal-title">Receive a Blessing</div>
+        <p class="modal-subtitle">Opening yourself to receive is an act of courage. You deserve kindness — let us connect you with someone who wants to give.</p>
+
+        <div class="form-group">
+          <label class="form-label">What would mean the most to you right now?</label>
+          <div class="blessing-options" id="receiveOptions">
+            <div class="blessing-option" onclick="selectBlessingType(this, 'receive')" data-type="words">
+              <span class="blessing-option-icon">💬</span>
+              <div class="blessing-option-name">Kind words</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'receive')" data-type="coffee">
+              <span class="blessing-option-icon">☕</span>
+              <div class="blessing-option-name">A small gift</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'receive')" data-type="skill">
+              <span class="blessing-option-icon">🧠</span>
+              <div class="blessing-option-name">Skills / advice</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'receive')" data-type="penpal">
+              <span class="blessing-option-icon">🤝</span>
+              <div class="blessing-option-name">A connection</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'receive')" data-type="surprise">
+              <span class="blessing-option-icon">🎲</span>
+              <div class="blessing-option-name">Surprise me</div>
+            </div>
+            <div class="blessing-option" onclick="selectBlessingType(this, 'receive')" data-type="creative">
+              <span class="blessing-option-icon">🎨</span>
+              <div class="blessing-option-name">Creative gift</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Anything you'd like your giver to know? (optional)</label>
+          <textarea class="form-textarea" id="receiveContext" maxlength="300" placeholder="Share as much or as little as you like. No pressure."></textarea>
+        </div>
+
+        <button class="modal-btn modal-btn-receive receive-mode" onclick="nextStep('receive', 2)" id="receiveNextBtn" disabled>
+          🌿 Find my blessing
+        </button>
+      </div>
+
+      <!-- Step 2: Searching -->
+      <div class="modal-step" id="receive-s2">
+        <div class="matching-screen receive-mode">
+          <div class="matching-globe">
+            <div class="globe-ring globe-ring-1"></div>
+            <div class="globe-ring globe-ring-2"></div>
+            <div class="globe-ring globe-ring-3"></div>
+            <div class="globe-center">🌿</div>
+          </div>
+          <div class="matching-status">Finding your giver…</div>
+          <p class="matching-sub">Connecting you with a generous soul nearby or across the world</p>
+        </div>
+      </div>
+
+      <!-- Step 3: Received! -->
+      <div class="modal-step" id="receive-s3">
+        <div style="text-align:center;padding:0.5rem 0;">
+          <span class="success-burst">🌿</span>
+          <div class="modal-title">A blessing is coming your way 💛</div>
+          <p class="modal-subtitle">A real person has chosen to give to you. Your blessing will arrive within 24 hours via this platform.</p>
+
+          <div class="connected-card receive-mode" style="text-align:left;">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--sage),#5C8870)">✦</div>
+            <div>
+              <div class="user-info-name">Your anonymous giver</div>
+              <div class="user-info-loc">📍 Somewhere in the world — thinking of you</div>
+            </div>
+          </div>
+
+          <p style="font-size:0.85rem;color:var(--soft);line-height:1.65;margin-top:1rem;">When you receive your blessing, you'll have the chance to pass one forward — to someone entirely new. That's how the circle grows. 🌱</p>
+          <button class="modal-btn modal-btn-receive" onclick="closeModal()" style="margin-top:1.5rem;">I'm ready to receive ✓</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════════════ JS ══════════════════════════════════ -->
+<script>
+  // ── STATE ──
+  let currentMode = 'give';
+  let selectedBlessingType = null;
+  let currentStep = 1;
+
+  // ── MODAL CONTROLS ──
+  function openModal(mode) {
+    currentMode = mode;
+    selectedBlessingType = null;
+    currentStep = 1;
+
+    document.getElementById('giveFlow').style.display = mode === 'give' ? 'block' : 'none';
+    document.getElementById('receiveFlow').style.display = mode === 'receive' ? 'block' : 'none';
+
+    // Reset steps
+    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
+    document.getElementById(`${mode}-s1`).classList.add('active');
+
+    // Reset selection
+    document.querySelectorAll('.blessing-option').forEach(o => o.classList.remove('selected'));
+    if (mode === 'give') {
+      document.getElementById('giveNextBtn').disabled = true;
+      document.getElementById('giveMessageGroup').style.display = 'none';
+      document.getElementById('giveMessage').value = '';
+      document.getElementById('charCount').textContent = '0';
+      document.getElementById('giveName').value = '';
+    } else {
+      document.getElementById('receiveNextBtn').disabled = true;
+      document.getElementById('receiveContext').value = '';
+    }
+
+    document.getElementById('modalOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) closeModal();
+  }
+
+  // ── BLESSING TYPE SELECTION ──
+  function selectBlessingType(el, mode) {
+    const group = mode === 'give' ? 'giveOptions' : 'receiveOptions';
+    document.querySelectorAll(`#${group} .blessing-option`).forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedBlessingType = el.dataset.type;
+
+    if (mode === 'give') {
+      document.getElementById('giveNextBtn').disabled = false;
+      const msgGroup = document.getElementById('giveMessageGroup');
+      if (['words', 'creative', 'skill'].includes(selectedBlessingType)) {
+        msgGroup.style.display = 'block';
+      } else {
+        msgGroup.style.display = 'none';
+      }
+    } else {
+      document.getElementById('receiveNextBtn').disabled = false;
+    }
+  }
+
+  // ── CHAR COUNT ──
+  function updateCharCount() {
+    const val = document.getElementById('giveMessage').value;
+    document.getElementById('charCount').textContent = val.length;
+  }
+
+  // ── STEP NAV ──
+  function nextStep(mode, step) {
+    document.querySelectorAll(`#${mode}Flow .modal-step`).forEach(s => s.classList.remove('active'));
+    document.getElementById(`${mode}-s${step}`).classList.add('active');
+    currentStep = step;
+
+    if (step === 2) {
+      // Simulate matching
+      const delay = 2200 + Math.random() * 1200;
+      setTimeout(() => nextStep(mode, 3), delay);
+
+      if (mode === 'give') {
+        // Pick random recipient
+        const recipients = [
+          { name: 'Anonymous Soul', loc: '📍 Seoul, South Korea', emoji: '🌸' },
+          { name: 'Anonymous Soul', loc: '📍 Lagos, Nigeria', emoji: '🌺' },
+          { name: 'Anonymous Soul', loc: '📍 Medellín, Colombia', emoji: '🌻' },
+          { name: 'Anonymous Soul', loc: '📍 Warsaw, Poland', emoji: '🌼' },
+          { name: 'Anonymous Soul', loc: '📍 Nairobi, Kenya', emoji: '🌞' },
+          { name: 'Anonymous Soul', loc: '📍 Manila, Philippines', emoji: '🌷' },
+        ];
+        const r = recipients[Math.floor(Math.random() * recipients.length)];
+        document.getElementById('recipientName').textContent = r.name;
+        document.getElementById('recipientLoc').textContent = r.loc;
+        document.querySelector('#give-s3 .avatar').textContent = r.emoji;
+      }
+    }
+  }
+
+  // ── SEND BLESSING ──
+  function sendBlessing() {
+    const msg = document.getElementById('giveMessage').value;
+    const name = document.getElementById('giveName').value.trim();
+    const typeLabels = {
+      words: '💬 Words of warmth',
+      coffee: '☕ A coffee',
+      gift: '🎁 A virtual gift',
+      skill: '🧠 Skills & advice',
+      penpal: '🤝 A pen pal connection',
+      creative: '🎨 A creative gift'
+    };
+
+    let summary = typeLabels[selectedBlessingType] || '✦ A blessing';
+    if (msg.trim()) {
+      summary += ` — "${msg.trim().substring(0, 80)}${msg.length > 80 ? '…' : ''}"`;
+    }
+    if (name) summary += ` — from ${name}`;
+
+    document.getElementById('blessingSent').textContent = summary;
+    nextStep('give', 4);
+  }
+
+  // ── STATS COUNTER ANIMATION ──
+  function animateCounters() {
+    document.querySelectorAll('[data-target]').forEach(el => {
+      const target = parseInt(el.dataset.target);
+      const duration = 2000;
+      const start = performance.now();
+
+      function update(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = Math.round(eased * target);
+        el.textContent = value.toLocaleString();
+        if (progress < 1) requestAnimationFrame(update);
+        else {
+          // Add % or + suffix
+          if (el.dataset.target === '98') el.textContent = '98%';
+        }
+      }
+      requestAnimationFrame(update);
+    });
+  }
+
+  // Trigger counter when stats bar is visible
+  const statsObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounters();
+        statsObserver.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+
+  statsObserver.observe(document.querySelector('.stats-bar'));
+
+  // ── ESC KEY ──
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+</script>
+</body>
+</html>
