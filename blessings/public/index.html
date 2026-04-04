@@ -555,9 +555,9 @@ footer{background:var(--deep);padding:3.5rem 2.5rem 2rem}
 <!-- ══════════════════════════ JS ══════════════════════════ -->
 <script>
 // ── CONFIG ──
-// !! REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE !!
 const SUPABASE_URL = 'https://hrcyqylloixuctzwvuxj.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyY3lxeWxsb2l4dWN0end2dXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDExNjMsImV4cCI6MjA5MDMxNzE2M30.9YhKqH_yhqbioJqfg_i68ZJI44I2dNiSQbN_jfuOBOk';
+const EDGE_URL = 'https://hrcyqylloixuctzwvuxj.supabase.co/functions/v1';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -777,7 +777,7 @@ async function doMatch(mode) {
   const { data: { session } } = await sb.auth.getSession();
 
   try {
-    const res = await fetch('/api/match', {
+    const res = await fetch(`${EDGE_URL}/match`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
       body: JSON.stringify({ mode, blessing_type: selectedType, message })
@@ -814,7 +814,7 @@ async function doMatch(mode) {
 async function sendBlessing() {
   if (!currentBlessingId) return;
   const { data: { session } } = await sb.auth.getSession();
-  await fetch('/api/blessings', {
+  await fetch(`${EDGE_URL}/blessings`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
     body: JSON.stringify({ action: 'deliver', blessing_id: currentBlessingId, delivery_detail: document.getElementById('gMsg').value })
@@ -831,7 +831,7 @@ async function loadDash() {
   if (!currentUser) return;
   const { data: { session } } = await sb.auth.getSession();
   try {
-    const res = await fetch('/api/blessings', {
+    const res = await fetch(`${EDGE_URL}/blessings`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
       body: JSON.stringify({ action: 'my-blessings' })
