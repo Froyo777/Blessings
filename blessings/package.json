@@ -1,0 +1,15 @@
+{
+  "name": "blessings-platform",
+  "version": "1.0.0",
+  "description": "Blessings — a global platform for giving and receiving kindness",
+  "scripts": {
+    "dev": "netlify dev"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "resend": "^3.2.0"
+  },
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}

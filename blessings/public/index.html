@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Blessings — Connect. Give. Receive.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#FAF6EF;--warm-white:#FDF9F4;--gold:#C49A3C;--gold-light:#E8C97A;
+  --amber:#D4854A;--deep:#1C1410;--mid:#5C4A35;--soft:#9C8870;
+  --give:#C49A3C;--receive:#7B9E87;--sage:#7B9E87;--sage-d:#5C8870;
+  --error:#C0392B;--success:#27AE60;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--deep);min-height:100vh;overflow-x:hidden}
+
+/* grain */
+body::before{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;z-index:999;opacity:.5}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;justify-content:space-between;align-items:center;padding:1.2rem 2.5rem;background:rgba(250,246,239,0.88);backdrop-filter:blur(14px);border-bottom:1px solid rgba(196,154,60,.12)}
+.nav-logo{font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:600;color:var(--deep);text-decoration:none;letter-spacing:.04em}
+.nav-logo span{color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:1rem}
+.nav-btn{padding:.55rem 1.3rem;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:500;cursor:pointer;border:none;transition:all .2s;letter-spacing:.04em}
+.nav-btn-ghost{background:transparent;color:var(--mid);border:1.5px solid rgba(196,154,60,.25)}
+.nav-btn-ghost:hover{border-color:var(--gold);color:var(--deep)}
+.nav-btn-gold{background:linear-gradient(135deg,var(--gold),var(--amber));color:white}
+.nav-user{font-size:.82rem;color:var(--mid);display:flex;align-items:center;gap:.5rem}
+.nav-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--amber));display:flex;align-items:center;justify-content:center;font-size:.9rem}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 2rem 4rem;position:relative;overflow:hidden}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 50% 20%,rgba(196,154,60,.1) 0%,transparent 70%),radial-gradient(ellipse 60% 50% at 80% 80%,rgba(123,158,135,.09) 0%,transparent 60%)}
+.hero-orb{position:absolute;border-radius:50%;filter:blur(80px);animation:drift 12s ease-in-out infinite alternate;pointer-events:none}
+.hero-orb-1{width:500px;height:500px;background:rgba(196,154,60,.07);top:-100px;left:-150px}
+.hero-orb-2{width:400px;height:400px;background:rgba(123,158,135,.08);bottom:-80px;right:-100px;animation-delay:-6s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,30px) scale(1.05)}}
+.hero-eyebrow{font-size:.76rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:1.5rem;opacity:0;animation:fadeUp .8s ease .2s forwards}
+.hero-title{font-family:'Cormorant Garamond',serif;font-size:clamp(3rem,9vw,7.5rem);font-weight:300;line-height:1;letter-spacing:-.02em;color:var(--deep);margin-bottom:1rem;opacity:0;animation:fadeUp .8s ease .4s forwards}
+.hero-title em{font-style:italic;color:var(--gold)}
+.hero-sub{font-family:'Cormorant Garamond',serif;font-size:clamp(1rem,2.5vw,1.4rem);font-weight:300;font-style:italic;color:var(--mid);max-width:540px;line-height:1.65;margin-bottom:3.5rem;opacity:0;animation:fadeUp .8s ease .6s forwards}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.cta-row{display:flex;gap:1.2rem;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeUp .8s ease .8s forwards}
+.btn{position:relative;display:inline-flex;align-items:center;gap:.65rem;padding:1.05rem 2.5rem;border-radius:100px;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;letter-spacing:.04em;cursor:pointer;border:none;text-decoration:none;transition:all .3s}
+.btn-give{background:linear-gradient(135deg,var(--gold),var(--amber));color:white;box-shadow:0 4px 24px rgba(196,154,60,.3)}
+.btn-give:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(196,154,60,.4)}
+.btn-receive{background:linear-gradient(135deg,var(--sage),var(--sage-d));color:white;box-shadow:0 4px 24px rgba(123,158,135,.3)}
+.btn-receive:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(123,158,135,.4)}
+.scroll-hint{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:.5rem;color:var(--soft);font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;opacity:0;animation:fadeUp .8s ease 1.4s forwards}
+.scroll-line{width:1px;height:40px;background:linear-gradient(to bottom,var(--gold),transparent);animation:sPulse 2s ease-in-out infinite}
+@keyframes sPulse{0%,100%{opacity:.5;transform:scaleY(1)}50%{opacity:1;transform:scaleY(.7)}}
+
+/* STATS */
+.stats-bar{background:var(--deep);padding:1.8rem 2rem;display:flex;justify-content:center;gap:4rem;flex-wrap:wrap}
+.stat{text-align:center;color:white}
+.stat-n{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:600;color:var(--gold-light);display:block}
+.stat-l{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:.2rem}
+
+/* SECTIONS */
+section{padding:6rem 2rem}
+.inner{max-width:1080px;margin:0 auto}
+.s-label{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);font-weight:500;margin-bottom:.8rem;display:block}
+.s-title{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,5vw,3.2rem);font-weight:300;line-height:1.15;color:var(--deep);margin-bottom:1.2rem}
+.s-title em{font-style:italic;color:var(--gold)}
+.s-body{font-size:.95rem;line-height:1.8;color:var(--mid);max-width:600px}
+
+/* STEPS */
+.how-section{background:var(--warm-white)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem;margin-top:3.5rem}
+.step{background:white;border-radius:18px;padding:2rem;border:1px solid rgba(196,154,60,.1);transition:transform .3s,box-shadow .3s;position:relative;overflow:hidden}
+.step:hover{transform:translateY(-4px);box-shadow:0 16px 40px rgba(28,20,16,.07)}
+.step::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--gold),var(--amber))}
+.step.r::before{background:linear-gradient(90deg,var(--sage),var(--sage-d))}
+.step-n{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:rgba(196,154,60,.15);line-height:1;margin-bottom:.6rem}
+.step-ico{font-size:1.6rem;margin-bottom:.6rem;display:block}
+.step-t{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:600;margin-bottom:.4rem;color:var(--deep)}
+.step-d{font-size:.87rem;line-height:1.7;color:var(--mid)}
+
+/* BLESSING TYPES */
+.b-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-top:3rem}
+.b-type{background:white;border-radius:14px;padding:1.6rem 1.3rem;text-align:center;border:1px solid rgba(196,154,60,.1);transition:all .25s;cursor:default}
+.b-type:hover{border-color:var(--gold);transform:translateY(-3px);box-shadow:0 10px 28px rgba(196,154,60,.1)}
+.b-ico{font-size:2rem;margin-bottom:.6rem;display:block}
+.b-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--deep);margin-bottom:.3rem}
+.b-desc{font-size:.77rem;color:var(--soft);line-height:1.5}
+
+/* TRUST */
+.trust{background:var(--warm-white);border-top:1px solid rgba(196,154,60,.08);border-bottom:1px solid rgba(196,154,60,.08);padding:1.8rem 2rem;display:flex;justify-content:center;gap:3.5rem;flex-wrap:wrap}
+.ti{display:flex;align-items:center;gap:.6rem;font-size:.83rem;color:var(--mid)}
+
+/* PHILOSOPHY */
+.ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:1.5rem}
+.ph-q{font-family:'Cormorant Garamond',serif;font-size:clamp(1.6rem,3vw,2.5rem);font-weight:300;font-style:italic;line-height:1.35;color:var(--deep)}
+.ph-q em{color:var(--gold);font-style:normal}
+.pillars{display:flex;flex-direction:column;gap:1.4rem}
+.pillar{display:flex;gap:1rem;align-items:flex-start}
+.p-ico{width:42px;height:42px;border-radius:11px;background:rgba(196,154,60,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.p-t{font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:600;color:var(--deep);margin-bottom:.2rem}
+.p-d{font-size:.85rem;color:var(--soft);line-height:1.6}
+
+/* STORIES */
+.stories{background:var(--warm-white)}
+.s-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.4rem;margin-top:3rem}
+.s-card{background:white;border-radius:18px;padding:1.8rem;border:1px solid rgba(196,154,60,.09);transition:transform .25s,box-shadow .25s}
+.s-card:hover{transform:translateY(-3px);box-shadow:0 14px 35px rgba(28,20,16,.06)}
+.s-q{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-style:italic;color:var(--mid);line-height:1.65;margin-bottom:1.1rem}
+.s-q::before{content:'\201C';color:var(--gold);font-size:1.8rem;line-height:0;vertical-align:-.35em;margin-right:.15em}
+.s-auth{display:flex;align-items:center;gap:.7rem}
+.s-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold-light),var(--amber));display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.s-nm{font-weight:500;font-size:.85rem;color:var(--deep)}
+.s-lc{font-size:.73rem;color:var(--soft)}
+
+/* CTA DARK */
+.cta-dark{background:var(--deep);text-align:center;padding:7rem 2rem;position:relative;overflow:hidden}
+.cta-dark-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 30% 50%,rgba(196,154,60,.07) 0%,transparent 70%),radial-gradient(ellipse 50% 60% at 70% 50%,rgba(123,158,135,.07) 0%,transparent 70%)}
+.cta-dark .s-title{color:var(--cream)}
+.cta-dark .s-body{color:rgba(250,246,239,.55);margin:0 auto 3rem}
+.cta-dark .s-label{color:var(--gold-light)}
+
+/* FOOTER */
+footer{background:var(--deep);padding:3.5rem 2.5rem 2rem}
+.ft{max-width:1080px;margin:0 auto}
+.ft-top{display:flex;justify-content:space-between;align-items:flex-start;gap:2.5rem;flex-wrap:wrap;margin-bottom:2.5rem;padding-bottom:2rem;border-bottom:1px solid rgba(250,246,239,.08)}
+.ft-tag{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.95rem;color:rgba(250,246,239,.35);margin-top:.4rem;max-width:240px}
+.ft-lg h4{font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:var(--gold-light);margin-bottom:.9rem}
+.ft-lg ul{list-style:none}
+.ft-lg li{margin-bottom:.5rem}
+.ft-lg a{text-decoration:none;color:rgba(250,246,239,.45);font-size:.85rem;transition:color .2s}
+.ft-lg a:hover{color:var(--gold-light)}
+.ft-bot{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.8rem;font-size:.76rem;color:rgba(250,246,239,.35)}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(28,20,16,.72);backdrop-filter:blur(10px);z-index:500;display:flex;align-items:center;justify-content:center;padding:1.5rem;opacity:0;pointer-events:none;transition:opacity .3s}
+.overlay.on{opacity:1;pointer-events:all}
+.modal{background:var(--warm-white);border-radius:22px;padding:2.5rem;max-width:520px;width:100%;position:relative;transform:translateY(18px) scale(.97);transition:transform .35s cubic-bezier(.34,1.56,.64,1);border:1px solid rgba(196,154,60,.12);box-shadow:0 40px 80px rgba(28,20,16,.22);max-height:90vh;overflow-y:auto}
+.overlay.on .modal{transform:translateY(0) scale(1)}
+.m-close{position:absolute;top:1.1rem;right:1.4rem;background:none;border:none;font-size:1.2rem;color:var(--soft);cursor:pointer;line-height:1;transition:color .2s}
+.m-close:hover{color:var(--deep)}
+.m-ico{font-size:2.8rem;margin-bottom:.9rem;display:block}
+.m-title{font-family:'Cormorant Garamond',serif;font-size:1.85rem;font-weight:600;color:var(--deep);margin-bottom:.4rem}
+.m-sub{font-size:.88rem;color:var(--soft);margin-bottom:1.8rem;line-height:1.6}
+.m-step{display:none}
+.m-step.on{display:block}
+.fg{margin-bottom:1.2rem}
+.fl{display:block;font-size:.74rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);font-weight:500;margin-bottom:.45rem}
+.fi,.fs,.ft2{width:100%;padding:.82rem 1rem;border:1.5px solid rgba(196,154,60,.18);border-radius:11px;background:white;font-family:'DM Sans',sans-serif;font-size:.93rem;color:var(--deep);transition:border-color .2s,box-shadow .2s;outline:none;appearance:none}
+.fi:focus,.fs:focus,.ft2:focus{border-color:var(--gold);box-shadow:0 0 0 3px rgba(196,154,60,.09)}
+.ft2{resize:vertical;min-height:85px}
+.b-opts{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.b-opt{padding:.85rem;border:1.5px solid rgba(196,154,60,.18);border-radius:11px;cursor:pointer;text-align:center;background:white;transition:all .2s;font-family:'DM Sans',sans-serif}
+.b-opt:hover,.b-opt.sel{border-color:var(--gold);background:rgba(196,154,60,.05)}
+.b-opt-ico{font-size:1.35rem;display:block;margin-bottom:.25rem}
+.b-opt-n{font-size:.78rem;font-weight:500;color:var(--deep)}
+.r-mode .b-opt:hover,.r-mode .b-opt.sel{border-color:var(--sage);background:rgba(123,158,135,.06)}
+.r-mode .fi:focus,.r-mode .fs:focus,.r-mode .ft2:focus{border-color:var(--sage);box-shadow:0 0 0 3px rgba(123,158,135,.09)}
+.mb{width:100%;padding:.95rem;border-radius:11px;border:none;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer;transition:all .2s;margin-top:.5rem}
+.mb-gold{background:linear-gradient(135deg,var(--gold),var(--amber));color:white;box-shadow:0 4px 14px rgba(196,154,60,.28)}
+.mb-gold:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px rgba(196,154,60,.38)}
+.mb-sage{background:linear-gradient(135deg,var(--sage),var(--sage-d));color:white;box-shadow:0 4px 14px rgba(123,158,135,.28)}
+.mb-sage:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 18px rgba(123,158,135,.38)}
+.mb-ghost{background:transparent;color:var(--soft);border:1.5px solid rgba(196,154,60,.18)}
+.mb-ghost:hover{color:var(--mid);border-color:var(--gold)}
+.mb:disabled{opacity:.5;cursor:not-allowed}
+.cc{font-size:.73rem;color:var(--soft);text-align:right;margin-top:.25rem}
+
+/* MATCHING ANIMATION */
+.match-screen{text-align:center;padding:.8rem 0}
+.globe-wrap{width:110px;height:110px;margin:0 auto 1.4rem;position:relative}
+.gr{position:absolute;inset:0;border-radius:50%;border:2px solid;animation:rPulse 1.5s ease-in-out infinite}
+.gr1{border-color:rgba(196,154,60,.7);animation-delay:0s}
+.gr2{border-color:rgba(196,154,60,.35);animation-delay:.3s;inset:-10px}
+.gr3{border-color:rgba(196,154,60,.15);animation-delay:.6s;inset:-20px}
+.r-mode .gr1{border-color:rgba(123,158,135,.7)}
+.r-mode .gr2{border-color:rgba(123,158,135,.35)}
+.r-mode .gr3{border-color:rgba(123,158,135,.15)}
+.gc{position:absolute;inset:18px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--amber));display:flex;align-items:center;justify-content:center;font-size:1.8rem;animation:rSlow 8s linear infinite}
+.r-mode .gc{background:linear-gradient(135deg,var(--sage),var(--sage-d))}
+@keyframes rPulse{0%,100%{transform:scale(1);opacity:.8}50%{transform:scale(1.05);opacity:.35}}
+@keyframes rSlow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+.ms-t{font-family:'Cormorant Garamond',serif;font-size:1.45rem;color:var(--deep);margin-bottom:.4rem}
+.ms-s{font-size:.83rem;color:var(--soft)}
+
+/* CONNECTED */
+.conn-card{background:rgba(196,154,60,.07);border:1.5px solid rgba(196,154,60,.18);border-radius:14px;padding:1.3rem;margin:1.3rem 0;display:flex;align-items:center;gap:1.1rem}
+.r-mode .conn-card{background:rgba(123,158,135,.07);border-color:rgba(123,158,135,.2)}
+.av{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--amber));display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
+.r-mode .av{background:linear-gradient(135deg,var(--sage),var(--sage-d))}
+.ui-n{font-family:'Cormorant Garamond',serif;font-size:1.15rem;font-weight:600;color:var(--deep)}
+.ui-l{font-size:.78rem;color:var(--soft);margin-top:.15rem}
+.pill{display:inline-block;padding:.25rem .8rem;border-radius:100px;font-size:.72rem;font-weight:500;background:rgba(196,154,60,.1);color:var(--gold);border:1px solid rgba(196,154,60,.22);margin:.18rem}
+
+/* SUCCESS */
+.burst{font-size:3.8rem;animation:bst .6s cubic-bezier(.34,1.56,.64,1) forwards;display:block;margin-bottom:.9rem}
+@keyframes bst{from{transform:scale(0) rotate(-20deg);opacity:0}to{transform:scale(1) rotate(0deg);opacity:1}}
+
+/* AUTH MODAL */
+.auth-tabs{display:flex;gap:0;margin-bottom:1.8rem;border-radius:10px;overflow:hidden;border:1.5px solid rgba(196,154,60,.18)}
+.auth-tab{flex:1;padding:.7rem;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:500;cursor:pointer;background:white;border:none;color:var(--soft);transition:all .2s}
+.auth-tab.on{background:var(--deep);color:white}
+.err-msg{background:rgba(192,57,43,.08);color:var(--error);border-radius:10px;padding:.7rem 1rem;font-size:.83rem;margin-bottom:1rem;display:none}
+.err-msg.on{display:block}
+.ok-msg{background:rgba(39,174,96,.08);color:var(--success);border-radius:10px;padding:.7rem 1rem;font-size:.83rem;margin-bottom:1rem;display:none}
+.ok-msg.on{display:block}
+
+/* DASHBOARD */
+.dash{display:none;min-height:100vh;padding:8rem 2rem 4rem}
+.dash.on{display:block}
+.dash-inner{max-width:900px;margin:0 auto}
+.dash-greeting{font-family:'Cormorant Garamond',serif;font-size:2.4rem;font-weight:300;color:var(--deep);margin-bottom:.5rem}
+.dash-sub{font-size:.9rem;color:var(--soft);margin-bottom:3rem}
+.dash-stats{display:flex;gap:1.5rem;flex-wrap:wrap;margin-bottom:3rem}
+.ds{background:white;border:1px solid rgba(196,154,60,.12);border-radius:14px;padding:1.5rem 2rem;flex:1;min-width:140px}
+.ds-n{font-family:'Cormorant Garamond',serif;font-size:2.2rem;font-weight:300;color:var(--gold)}
+.ds-l{font-size:.75rem;color:var(--soft);text-transform:uppercase;letter-spacing:.1em;margin-top:.2rem}
+.dash-cta{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:3.5rem}
+.b-list-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:600;color:var(--deep);margin-bottom:1.2rem}
+.b-list{display:flex;flex-direction:column;gap:.8rem}
+.b-item{background:white;border:1px solid rgba(196,154,60,.1);border-radius:14px;padding:1.2rem 1.5rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
+.b-item-l .bi-t{font-family:'Cormorant Garamond',serif;font-size:1.05rem;font-weight:600;color:var(--deep)}
+.b-item-l .bi-d{font-size:.8rem;color:var(--soft);margin-top:.15rem}
+.b-status{font-size:.72rem;padding:.3rem .8rem;border-radius:100px;font-weight:500}
+.bs-pending{background:rgba(196,154,60,.1);color:var(--gold)}
+.bs-delivered{background:rgba(39,174,96,.1);color:var(--success)}
+.bs-acknowledged{background:rgba(123,158,135,.12);color:var(--sage-d)}
+.empty{text-align:center;color:var(--soft);font-size:.9rem;padding:2.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem}
+
+@media(max-width:768px){
+  nav{padding:1rem 1.2rem}
+  .nav-links{display:none}
+  .ph-grid{grid-template-columns:1fr;gap:2.5rem}
+  .stats-bar{gap:2rem}
+  .modal{padding:2rem 1.4rem}
+  .b-opts{grid-template-columns:1fr 1fr}
+  .ft-top{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#"><span>✦</span> Blessings</a>
+  <div class="nav-right" id="navRight">
+    <button class="nav-btn nav-btn-ghost" onclick="openAuth('signin')">Sign in</button>
+    <button class="nav-btn nav-btn-gold" onclick="openAuth('signup')">Join free</button>
+  </div>
+</nav>
+
+<!-- ══════ MAIN SITE ══════ -->
+<div id="mainSite">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <p class="hero-eyebrow">A global circle of kindness</p>
+  <h1 class="hero-title">Give &amp; Receive<br><em>Blessings</em></h1>
+  <p class="hero-sub">Connect with a stranger across the world. Give something meaningful. Receive something unexpected. Reignite trust in humanity — one blessing at a time.</p>
+  <div class="cta-row">
+    <button class="btn btn-give" onclick="handleMainCTA('give')"><span>✦</span> Give a Blessing</button>
+    <button class="btn btn-receive" onclick="handleMainCTA('receive')"><span>🌿</span> Receive a Blessing</button>
+  </div>
+  <div class="scroll-hint"><span>Discover more</span><div class="scroll-line"></div></div>
+</section>
+
+<!-- STATS -->
+<div class="stats-bar">
+  <div class="stat"><span class="stat-n" data-target="12847">0</span><span class="stat-l">Blessings given</span></div>
+  <div class="stat"><span class="stat-n" data-target="94">0</span><span class="stat-l">Countries connected</span></div>
+  <div class="stat"><span class="stat-n" data-target="98" data-suffix="%">0</span><span class="stat-l">Feel more hopeful</span></div>
+  <div class="stat"><span class="stat-n" data-target="3261">0</span><span class="stat-l">Ongoing connections</span></div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="inner">
+    <span class="s-label">How it works</span>
+    <h2 class="s-title">Simple, <em>meaningful,</em><br>and always safe</h2>
+    <p class="s-body">Every act of giving creates a ripple. You give — they receive — and when ready, they pass it forward to someone new.</p>
+    <div class="steps">
+      <div class="step"><div class="step-n">01</div><span class="step-ico">✦</span><div class="step-t">Choose to Give</div><p class="step-d">Select what you'd like to offer — words, a skill, a gift, or your presence. Every blessing counts.</p></div>
+      <div class="step"><div class="step-n">02</div><span class="step-ico">🌍</span><div class="step-t">We Find Your Match</div><p class="step-d">Our system connects you with someone across the globe who has opened themselves to receiving — anonymous and safe.</p></div>
+      <div class="step"><div class="step-n">03</div><span class="step-ico">🕊️</span><div class="step-t">The Blessing Flows</div><p class="step-d">You send your blessing through our secure platform. Something unexpected and uplifting arrives for a real human being.</p></div>
+      <div class="step r"><div class="step-n">04</div><span class="step-ico">🌿</span><div class="step-t">The Cycle Continues</div><p class="step-d">After receiving, the recipient is gently invited to give — to someone else entirely. A chain of kindness, growing forever.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- TRUST -->
+<div class="trust">
+  <div class="ti"><span>🔒</span><span>Anonymous until you choose otherwise</span></div>
+  <div class="ti"><span>🛡️</span><span>Safe, moderated platform</span></div>
+  <div class="ti"><span>💛</span><span>No obligation, ever</span></div>
+  <div class="ti"><span>🌐</span><span>Real humans, 94+ countries</span></div>
+</div>
+
+<!-- BLESSING TYPES -->
+<section id="types">
+  <div class="inner">
+    <span class="s-label">What you can give</span>
+    <h2 class="s-title">Every <em>blessing</em> matters</h2>
+    <p class="s-body">Whether you have five minutes or five dollars, there's a blessing waiting to be given.</p>
+    <div class="b-grid">
+      <div class="b-type"><span class="b-ico">💬</span><div class="b-name">Words of Warmth</div><p class="b-desc">A heartfelt letter or words of encouragement</p></div>
+      <div class="b-type"><span class="b-ico">☕</span><div class="b-name">Buy a Coffee</div><p class="b-desc">A small monetary gift via Ko-fi or PayPal</p></div>
+      <div class="b-type"><span class="b-ico">🎁</span><div class="b-name">Virtual Gift</div><p class="b-desc">A digital gift card to Amazon, Spotify, Netflix</p></div>
+      <div class="b-type"><span class="b-ico">🧠</span><div class="b-name">Share a Skill</div><p class="b-desc">Review a CV, teach something, give advice</p></div>
+      <div class="b-type"><span class="b-ico">🤝</span><div class="b-name">Pen Pal</div><p class="b-desc">Become someone's ongoing supporter</p></div>
+      <div class="b-type"><span class="b-ico">🎨</span><div class="b-name">Creative Gift</div><p class="b-desc">A drawing, poem, playlist, or piece of art</p></div>
+      <div class="b-type"><span class="b-ico">📖</span><div class="b-name">Book or Course</div><p class="b-desc">Gift a life-changing book or online course</p></div>
+      <div class="b-type"><span class="b-ico">🌟</span><div class="b-name">Your Blessing</div><p class="b-desc">Have something unique? We celebrate all giving</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PHILOSOPHY -->
+<section style="background:var(--cream)">
+  <div class="inner">
+    <div class="ph-grid">
+      <div>
+        <span class="s-label">Our belief</span>
+        <p class="ph-q">"When one person gives freely, and another receives with gratitude — <em>trust</em> is rebuilt, one heart at a time."</p>
+      </div>
+      <div class="pillars">
+        <div class="pillar"><div class="p-ico">🤲</div><div><div class="p-t">Radical Generosity</div><p class="p-d">Giving without expectation is the most powerful force for human connection in the world today.</p></div></div>
+        <div class="pillar"><div class="p-ico">🛡️</div><div><div class="p-t">Safety First, Always</div><p class="p-d">Every interaction is moderated. You control what you share. No personal details ever exchanged without consent.</p></div></div>
+        <div class="pillar"><div class="p-ico">🌱</div><div><div class="p-t">A Chain of Good</div><p class="p-d">Receivers become givers. The blessing never stops — it multiplies across continents and communities.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORIES -->
+<section class="stories" id="stories">
+  <div class="inner">
+    <span class="s-label">Real connections</span>
+    <h2 class="s-title">Stories that <em>stay</em> with you</h2>
+    <p class="s-body">Every blessing creates a story. Here are a few from our growing community.</p>
+    <div class="s-grid">
+      <div class="s-card"><p class="s-q">I received a message from someone in Brazil that said "You are not invisible." I had been struggling for months. I printed it and put it on my wall.</p><div class="s-auth"><div class="s-av">🌸</div><div><div class="s-nm">Sarah M.</div><div class="s-lc">Manchester, UK</div></div></div></div>
+      <div class="s-card"><p class="s-q">I gave my first blessing — a coffee gift card — to someone in South Korea. They sent me back the most beautiful poem a week later. I still read it.</p><div class="s-auth"><div class="s-av">🌊</div><div><div class="s-nm">Tariq H.</div><div class="s-lc">Gold Coast, Australia</div></div></div></div>
+      <div class="s-card"><p class="s-q">Giving helped me as much as the person receiving. I'd been so closed off. Now I feel like I'm part of something bigger than myself again.</p><div class="s-auth"><div class="s-av">✨</div><div><div class="s-nm">Maria L.</div><div class="s-lc">São Paulo, Brazil</div></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTION -->
+<section class="cta-dark" id="action">
+  <div class="cta-dark-bg"></div>
+  <div class="inner" style="position:relative">
+    <span class="s-label">Ready?</span>
+    <h2 class="s-title">Someone is waiting<br>for <em>your</em> blessing</h2>
+    <p class="s-body">Right now, somewhere in the world, someone opened this site hoping to feel less alone. Be the reason they smile today.</p>
+    <div class="cta-row" style="opacity:1;animation:none;justify-content:center">
+      <button class="btn btn-give" onclick="handleMainCTA('give')"><span>✦</span> Give a Blessing</button>
+      <button class="btn btn-receive" onclick="handleMainCTA('receive')"><span>🌿</span> Receive a Blessing</button>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft">
+    <div class="ft-top">
+      <div><a class="nav-logo" href="#" style="color:var(--cream)"><span>✦</span> Blessings</a><p class="ft-tag">Reigniting trust between humans, one blessing at a time.</p></div>
+      <div class="ft-lg"><h4>Platform</h4><ul><li><a href="#how">How it works</a></li><li><a href="#types">Types of blessings</a></li><li><a href="#stories">Stories</a></li><li><a href="#">Safety guide</a></li></ul></div>
+      <div class="ft-lg"><h4>Organisation</h4><ul><li><a href="#">Our mission</a></li><li><a href="#">Partner with us</a></li><li><a href="#">Press</a></li><li><a href="#">Contact</a></li></ul></div>
+      <div class="ft-lg"><h4>Trust &amp; Safety</h4><ul><li><a href="#">Privacy policy</a></li><li><a href="#">Terms of use</a></li><li><a href="#">Community guidelines</a></li><li><a href="#">Report an issue</a></li></ul></div>
+    </div>
+    <div class="ft-bot"><span>© 2025 Blessings. Made with ♥ for humanity.</span><span>A not-for-profit initiative</span></div>
+  </div>
+</footer>
+
+</div><!-- /mainSite -->
+
+<!-- ══════ DASHBOARD ══════ -->
+<div class="dash" id="dashboard">
+  <div class="dash-inner">
+    <div class="dash-greeting" id="dashGreeting">Welcome back ✦</div>
+    <div class="dash-sub" id="dashSub">You are part of something beautiful.</div>
+    <div class="dash-stats">
+      <div class="ds"><div class="ds-n" id="dsGiven">0</div><div class="ds-l">Blessings given</div></div>
+      <div class="ds"><div class="ds-n" id="dsReceived">0</div><div class="ds-l">Blessings received</div></div>
+    </div>
+    <div class="dash-cta">
+      <button class="btn btn-give" onclick="openBlessing('give')"><span>✦</span> Give a Blessing</button>
+      <button class="btn btn-receive" onclick="openBlessing('receive')"><span>🌿</span> Receive a Blessing</button>
+    </div>
+    <div id="dashBlessings">
+      <div class="b-list-title">My Blessings</div>
+      <div class="b-list" id="bList"><div class="empty">Your blessings will appear here ✦</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ AUTH MODAL ══════════ -->
+<div class="overlay" id="authOverlay" onclick="handleAuthOverlay(event)">
+  <div class="modal">
+    <button class="m-close" onclick="closeAuth()">✕</button>
+    <span class="m-ico">✦</span>
+    <div class="m-title" id="authTitle">Join Blessings</div>
+    <p class="m-sub">Create a free account to start giving and receiving.</p>
+
+    <div class="auth-tabs">
+      <button class="auth-tab on" id="tabSignup" onclick="switchTab('signup')">Create account</button>
+      <button class="auth-tab" id="tabSignin" onclick="switchTab('signin')">Sign in</button>
+    </div>
+
+    <div class="err-msg" id="authErr"></div>
+    <div class="ok-msg" id="authOk"></div>
+
+    <!-- SIGNUP -->
+    <div id="signupForm">
+      <div class="fg"><label class="fl">Your first name</label><input class="fi" id="signupName" type="text" placeholder="What should we call you?"/></div>
+      <div class="fg"><label class="fl">Country</label><input class="fi" id="signupCountry" type="text" placeholder="Where are you in the world?"/></div>
+      <div class="fg"><label class="fl">Email address</label><input class="fi" id="signupEmail" type="email" placeholder="you@email.com"/></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="signupPassword" type="password" placeholder="At least 8 characters"/></div>
+      <button class="mb mb-gold" onclick="doSignup()" id="signupBtn">Create my account →</button>
+    </div>
+
+    <!-- SIGNIN -->
+    <div id="signinForm" style="display:none">
+      <div class="fg"><label class="fl">Email address</label><input class="fi" id="signinEmail" type="email" placeholder="you@email.com"/></div>
+      <div class="fg"><label class="fl">Password</label><input class="fi" id="signinPassword" type="password" placeholder="Your password"/></div>
+      <button class="mb mb-gold" onclick="doSignin()" id="signinBtn">Sign in →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ BLESSING MODAL ══════════ -->
+<div class="overlay" id="blessOverlay" onclick="handleBlessOverlay(event)">
+  <div class="modal" id="blessModal">
+    <button class="m-close" onclick="closeBlessing()">✕</button>
+
+    <!-- GIVE FLOW -->
+    <div id="giveFlow">
+      <div class="m-step on" id="g1">
+        <span class="m-ico">✦</span>
+        <div class="m-title">Give a Blessing</div>
+        <p class="m-sub">Choose what you'd like to offer to someone who needs it.</p>
+        <div class="fg">
+          <label class="fl">What would you like to give?</label>
+          <div class="b-opts" id="gOpts">
+            <div class="b-opt" onclick="selType(this,'give')" data-t="words"><span class="b-opt-ico">💬</span><div class="b-opt-n">Words</div></div>
+            <div class="b-opt" onclick="selType(this,'give')" data-t="coffee"><span class="b-opt-ico">☕</span><div class="b-opt-n">Buy a coffee</div></div>
+            <div class="b-opt" onclick="selType(this,'give')" data-t="gift"><span class="b-opt-ico">🎁</span><div class="b-opt-n">Virtual gift</div></div>
+            <div class="b-opt" onclick="selType(this,'give')" data-t="skill"><span class="b-opt-ico">🧠</span><div class="b-opt-n">Share a skill</div></div>
+            <div class="b-opt" onclick="selType(this,'give')" data-t="penpal"><span class="b-opt-ico">🤝</span><div class="b-opt-n">Pen pal</div></div>
+            <div class="b-opt" onclick="selType(this,'give')" data-t="creative"><span class="b-opt-ico">🎨</span><div class="b-opt-n">Creative gift</div></div>
+          </div>
+        </div>
+        <div class="fg" id="gMsgGrp" style="display:none">
+          <label class="fl">Your blessing message</label>
+          <textarea class="ft2" id="gMsg" maxlength="500" placeholder="Write from the heart…" oninput="updCC()"></textarea>
+          <div class="cc"><span id="cc">0</span>/500</div>
+        </div>
+        <button class="mb mb-gold" id="gNext" onclick="doMatch('give')" disabled>Find someone to bless →</button>
+      </div>
+
+      <div class="m-step" id="g2">
+        <div class="match-screen">
+          <div class="globe-wrap"><div class="gr gr1"></div><div class="gr gr2"></div><div class="gr gr3"></div><div class="gc">🌍</div></div>
+          <div class="ms-t">Finding your recipient…</div>
+          <p class="ms-s">Searching across 94 countries</p>
+        </div>
+      </div>
+
+      <div class="m-step" id="g3">
+        <span class="m-ico">✨</span>
+        <div class="m-title">Match found!</div>
+        <p class="m-sub">You've been connected with someone who opened their heart to receive today.</p>
+        <div class="conn-card">
+          <div class="av" id="gMatchAv">🌸</div>
+          <div><div class="ui-n" id="gMatchName">Anonymous Soul</div><div class="ui-l" id="gMatchLoc">📍 Somewhere in the world</div></div>
+        </div>
+        <div class="fg" style="font-size:.8rem;color:var(--soft);line-height:1.65;margin-bottom:.8rem">Your blessing will be delivered securely. The recipient won't see your personal details unless you choose to share them.</div>
+        <div><span class="pill">🔒 Anonymous</span><span class="pill">🌿 Moderated</span><span class="pill">💛 No reply required</span></div>
+        <button class="mb mb-gold" onclick="sendBlessing()" style="margin-top:1.2rem">✦ Send my blessing</button>
+        <button class="mb mb-ghost" onclick="closeBlessing()">Not ready yet</button>
+      </div>
+
+      <div class="m-step" id="g4">
+        <div style="text-align:center;padding:.8rem 0">
+          <span class="burst">✦</span>
+          <div class="m-title">Blessing sent! 🌟</div>
+          <p class="m-sub">Your kindness is on its way. Thank you for being part of something beautiful.</p>
+          <div style="background:rgba(196,154,60,.07);border-radius:14px;padding:1.1rem;margin:1.3rem 0;text-align:left">
+            <div style="font-size:.75rem;color:var(--soft);letter-spacing:.1em;text-transform:uppercase;margin-bottom:.35rem">Your blessing</div>
+            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1rem;color:var(--mid)" id="bSent"></div>
+          </div>
+          <p style="font-size:.83rem;color:var(--soft);line-height:1.65">When your recipient is ready, they may pass a blessing forward — to someone entirely new. The circle continues. 🌱</p>
+          <button class="mb mb-gold" onclick="closeBlessing();loadDash()" style="margin-top:1.3rem">Done ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECEIVE FLOW -->
+    <div id="receiveFlow" style="display:none">
+      <div class="m-step on r-mode" id="r1">
+        <span class="m-ico">🌿</span>
+        <div class="m-title">Receive a Blessing</div>
+        <p class="m-sub">Opening yourself to receive is an act of courage. You deserve kindness.</p>
+        <div class="fg">
+          <label class="fl">What would mean the most to you?</label>
+          <div class="b-opts" id="rOpts">
+            <div class="b-opt" onclick="selType(this,'receive')" data-t="words"><span class="b-opt-ico">💬</span><div class="b-opt-n">Kind words</div></div>
+            <div class="b-opt" onclick="selType(this,'receive')" data-t="coffee"><span class="b-opt-ico">☕</span><div class="b-opt-n">A small gift</div></div>
+            <div class="b-opt" onclick="selType(this,'receive')" data-t="skill"><span class="b-opt-ico">🧠</span><div class="b-opt-n">Skills / advice</div></div>
+            <div class="b-opt" onclick="selType(this,'receive')" data-t="penpal"><span class="b-opt-ico">🤝</span><div class="b-opt-n">A connection</div></div>
+            <div class="b-opt" onclick="selType(this,'receive')" data-t="surprise"><span class="b-opt-ico">🎲</span><div class="b-opt-n">Surprise me</div></div>
+            <div class="b-opt" onclick="selType(this,'receive')" data-t="creative"><span class="b-opt-ico">🎨</span><div class="b-opt-n">Creative gift</div></div>
+          </div>
+        </div>
+        <div class="fg">
+          <label class="fl">Anything you'd like your giver to know? (optional)</label>
+          <textarea class="ft2 r-mode" id="rContext" maxlength="300" placeholder="Share as much or as little as you like. No pressure."></textarea>
+        </div>
+        <button class="mb mb-sage r-mode" id="rNext" onclick="doMatch('receive')" disabled>🌿 Find my blessing</button>
+      </div>
+
+      <div class="m-step" id="r2">
+        <div class="match-screen r-mode">
+          <div class="globe-wrap"><div class="gr gr1"></div><div class="gr gr2"></div><div class="gr gr3"></div><div class="gc">🌿</div></div>
+          <div class="ms-t">Finding your giver…</div>
+          <p class="ms-s">Connecting you with a generous soul</p>
+        </div>
+      </div>
+
+      <div class="m-step" id="r3">
+        <div style="text-align:center;padding:.5rem 0">
+          <span class="burst">🌿</span>
+          <div class="m-title">A blessing is coming 💛</div>
+          <p class="m-sub">A real person has chosen to give to you. Your blessing will arrive within 24 hours.</p>
+          <div class="conn-card r-mode" style="text-align:left">
+            <div class="av r-mode">✦</div>
+            <div><div class="ui-n">Your anonymous giver</div><div class="ui-l">📍 Somewhere in the world — thinking of you</div></div>
+          </div>
+          <p style="font-size:.83rem;color:var(--soft);line-height:1.65;margin-top:1rem">When you receive your blessing, you'll have the chance to pass one forward — to someone entirely new. 🌱</p>
+          <button class="mb mb-sage" onclick="closeBlessing();loadDash()" style="margin-top:1.3rem">I'm ready to receive ✓</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════════════════ JS ══════════════════════════ -->
+<script>
+// ── CONFIG ──
+// !! REPLACE THESE WITH YOUR ACTUAL VALUES FROM SUPABASE !!
+const SUPABASE_URL = 'https://hrcyqylloixuctzwvuxj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhyY3lxeWxsb2l4dWN0end2dXhqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3NDExNjMsImV4cCI6MjA5MDMxNzE2M30.9YhKqH_yhqbioJqfg_i68ZJI44I2dNiSQbN_jfuOBOk';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── STATE ──
+let currentUser = null;
+let currentProfile = null;
+let blessingMode = 'give';
+let selectedType = null;
+let currentBlessingId = null;
+
+// ── INIT ──
+(async () => {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    currentUser = session.user;
+    await loadProfile();
+    showDash();
+  }
+
+  sb.auth.onAuthStateChange(async (_event, session) => {
+    currentUser = session?.user || null;
+    if (currentUser) {
+      await loadProfile();
+      showDash();
+      closeAuth();
+    } else {
+      showMain();
+    }
+  });
+
+  animateCounters();
+})();
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', currentUser.id).single();
+  currentProfile = data;
+}
+
+// ── NAV ──
+function showDash() {
+  document.getElementById('mainSite').style.display = 'none';
+  document.getElementById('dashboard').classList.add('on');
+  const name = currentProfile?.display_name || currentUser?.email?.split('@')[0] || 'Friend';
+  document.getElementById('dashGreeting').textContent = `Welcome back, ${name} ✦`;
+  document.getElementById('dsGiven').textContent = currentProfile?.blessings_given || 0;
+  document.getElementById('dsReceived').textContent = currentProfile?.blessings_received || 0;
+  updateNavForUser();
+  loadDash();
+}
+
+function showMain() {
+  document.getElementById('mainSite').style.display = 'block';
+  document.getElementById('dashboard').classList.remove('on');
+  updateNavForGuest();
+}
+
+function updateNavForUser() {
+  const name = currentProfile?.display_name || 'Me';
+  const emoji = currentProfile?.avatar_emoji || '🌟';
+  document.getElementById('navRight').innerHTML = `
+    <div class="nav-user"><div class="nav-avatar">${emoji}</div>${name}</div>
+    <button class="nav-btn nav-btn-ghost" onclick="doSignout()">Sign out</button>`;
+}
+
+function updateNavForGuest() {
+  document.getElementById('navRight').innerHTML = `
+    <button class="nav-btn nav-btn-ghost" onclick="openAuth('signin')">Sign in</button>
+    <button class="nav-btn nav-btn-gold" onclick="openAuth('signup')">Join free</button>`;
+}
+
+async function doSignout() {
+  await sb.auth.signOut();
+  currentUser = null; currentProfile = null;
+  showMain();
+}
+
+// ── AUTH ──
+function openAuth(tab) {
+  switchTab(tab);
+  document.getElementById('authOverlay').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function closeAuth() {
+  document.getElementById('authOverlay').classList.remove('on');
+  document.body.style.overflow = '';
+}
+function handleAuthOverlay(e) { if (e.target === document.getElementById('authOverlay')) closeAuth(); }
+
+function switchTab(tab) {
+  document.getElementById('signupForm').style.display = tab === 'signup' ? 'block' : 'none';
+  document.getElementById('signinForm').style.display = tab === 'signin' ? 'block' : 'none';
+  document.getElementById('tabSignup').classList.toggle('on', tab === 'signup');
+  document.getElementById('tabSignin').classList.toggle('on', tab === 'signin');
+  document.getElementById('authTitle').textContent = tab === 'signup' ? 'Join Blessings' : 'Welcome back';
+  hideAuthMsgs();
+}
+
+function showAuthErr(msg) {
+  const el = document.getElementById('authErr');
+  el.textContent = msg; el.classList.add('on');
+  document.getElementById('authOk').classList.remove('on');
+}
+function showAuthOk(msg) {
+  const el = document.getElementById('authOk');
+  el.textContent = msg; el.classList.add('on');
+  document.getElementById('authErr').classList.remove('on');
+}
+function hideAuthMsgs() {
+  document.getElementById('authErr').classList.remove('on');
+  document.getElementById('authOk').classList.remove('on');
+}
+
+async function doSignup() {
+  const email = document.getElementById('signupEmail').value.trim();
+  const password = document.getElementById('signupPassword').value;
+  const name = document.getElementById('signupName').value.trim();
+  const country = document.getElementById('signupCountry').value.trim();
+  if (!email || !password) return showAuthErr('Please enter your email and password.');
+  if (password.length < 8) return showAuthErr('Password must be at least 8 characters.');
+
+  const btn = document.getElementById('signupBtn');
+  btn.disabled = true; btn.textContent = 'Creating account…';
+
+  const { data, error } = await sb.auth.signUp({ email, password, options: { data: { display_name: name, country } } });
+  btn.disabled = false; btn.textContent = 'Create my account →';
+
+  if (error) return showAuthErr(error.message);
+
+  // Update profile
+  if (data.user) {
+    await sb.from('profiles').update({ display_name: name || email.split('@')[0], country: country || null }).eq('id', data.user.id);
+  }
+
+  showAuthOk('Account created! Check your email to confirm, then sign in.');
+  setTimeout(() => switchTab('signin'), 2000);
+}
+
+async function doSignin() {
+  const email = document.getElementById('signinEmail').value.trim();
+  const password = document.getElementById('signinPassword').value;
+  if (!email || !password) return showAuthErr('Please enter your email and password.');
+
+  const btn = document.getElementById('signinBtn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  btn.disabled = false; btn.textContent = 'Sign in →';
+
+  if (error) return showAuthErr('Invalid email or password. Please try again.');
+  // Auth state change handles the rest
+}
+
+// ── BLESSING FLOW ──
+function handleMainCTA(mode) {
+  if (currentUser) {
+    openBlessing(mode);
+  } else {
+    openAuth('signup');
+  }
+}
+
+function openBlessing(mode) {
+  blessingMode = mode;
+  selectedType = null;
+  currentBlessingId = null;
+
+  document.getElementById('giveFlow').style.display = mode === 'give' ? 'block' : 'none';
+  document.getElementById('receiveFlow').style.display = mode === 'receive' ? 'block' : 'none';
+
+  document.querySelectorAll('.m-step').forEach(s => s.classList.remove('on'));
+  document.getElementById(mode === 'give' ? 'g1' : 'r1').classList.add('on');
+  document.querySelectorAll('.b-opt').forEach(o => o.classList.remove('sel'));
+
+  if (mode === 'give') {
+    document.getElementById('gNext').disabled = true;
+    document.getElementById('gMsgGrp').style.display = 'none';
+    document.getElementById('gMsg').value = '';
+    document.getElementById('cc').textContent = '0';
+  } else {
+    document.getElementById('rNext').disabled = true;
+    document.getElementById('rContext').value = '';
+  }
+
+  document.getElementById('blessOverlay').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBlessing() {
+  document.getElementById('blessOverlay').classList.remove('on');
+  document.body.style.overflow = '';
+}
+function handleBlessOverlay(e) { if (e.target === document.getElementById('blessOverlay')) closeBlessing(); }
+
+function selType(el, mode) {
+  const grp = mode === 'give' ? 'gOpts' : 'rOpts';
+  document.querySelectorAll(`#${grp} .b-opt`).forEach(o => o.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedType = el.dataset.t;
+  if (mode === 'give') {
+    document.getElementById('gNext').disabled = false;
+    document.getElementById('gMsgGrp').style.display = ['words','creative','skill'].includes(selectedType) ? 'block' : 'none';
+  } else {
+    document.getElementById('rNext').disabled = false;
+  }
+}
+
+function updCC() {
+  document.getElementById('cc').textContent = document.getElementById('gMsg').value.length;
+}
+
+async function doMatch(mode) {
+  // Show matching screen
+  document.querySelectorAll(`#${mode === 'give' ? 'giveFlow' : 'receiveFlow'} .m-step`).forEach(s => s.classList.remove('on'));
+  document.getElementById(mode === 'give' ? 'g2' : 'r2').classList.add('on');
+
+  const message = mode === 'give' ? document.getElementById('gMsg').value : document.getElementById('rContext').value;
+  const { data: { session } } = await sb.auth.getSession();
+
+  try {
+    const res = await fetch('/api/match', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ mode, blessing_type: selectedType, message })
+    });
+    const result = await res.json();
+
+    // Minimum animation time
+    await new Promise(r => setTimeout(r, 2000));
+
+    if (mode === 'give') {
+      if (result.status === 'matched') {
+        currentBlessingId = result.blessing_id;
+        document.getElementById('gMatchAv').textContent = result.match?.avatar_emoji || '🌸';
+        document.getElementById('gMatchName').textContent = result.match?.display_name || 'Anonymous Soul';
+        document.getElementById('gMatchLoc').textContent = `📍 ${result.match?.country || 'Somewhere in the world'}`;
+        document.querySelectorAll('#giveFlow .m-step').forEach(s => s.classList.remove('on'));
+        document.getElementById('g3').classList.add('on');
+      } else {
+        // Queued
+        document.querySelectorAll('#giveFlow .m-step').forEach(s => s.classList.remove('on'));
+        document.getElementById('g4').classList.add('on');
+        document.getElementById('bSent').textContent = "You're in the queue! We'll email you when matched.";
+      }
+    } else {
+      document.querySelectorAll('#receiveFlow .m-step').forEach(s => s.classList.remove('on'));
+      document.getElementById('r3').classList.add('on');
+    }
+  } catch (err) {
+    alert('Something went wrong. Please try again.');
+    closeBlessing();
+  }
+}
+
+async function sendBlessing() {
+  if (!currentBlessingId) return;
+  const { data: { session } } = await sb.auth.getSession();
+  await fetch('/api/blessings', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+    body: JSON.stringify({ action: 'deliver', blessing_id: currentBlessingId, delivery_detail: document.getElementById('gMsg').value })
+  });
+
+  const typeLabels = { words:'💬 Words of warmth', coffee:'☕ A coffee', gift:'🎁 A virtual gift', skill:'🧠 Skills & advice', penpal:'🤝 A pen pal connection', creative:'🎨 A creative gift' };
+  document.getElementById('bSent').textContent = typeLabels[selectedType] || '✦ A blessing';
+  document.querySelectorAll('#giveFlow .m-step').forEach(s => s.classList.remove('on'));
+  document.getElementById('g4').classList.add('on');
+}
+
+// ── DASHBOARD BLESSINGS ──
+async function loadDash() {
+  if (!currentUser) return;
+  const { data: { session } } = await sb.auth.getSession();
+  try {
+    const res = await fetch('/api/blessings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+      body: JSON.stringify({ action: 'my-blessings' })
+    });
+    const { given, received } = await res.json();
+    const all = [
+      ...(given || []).map(b => ({ ...b, direction: 'given' })),
+      ...(received || []).map(b => ({ ...b, direction: 'received' }))
+    ].sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+    const list = document.getElementById('bList');
+    if (!all.length) { list.innerHTML = '<div class="empty">Your blessings will appear here ✦</div>'; return; }
+
+    const typeLabels = { words:'💬 Words', coffee:'☕ Coffee', gift:'🎁 Gift', skill:'🧠 Skill', penpal:'🤝 Pen pal', creative:'🎨 Creative', surprise:'🎲 Surprise' };
+    const statusClass = { pending:'bs-pending', delivered:'bs-delivered', acknowledged:'bs-acknowledged' };
+    list.innerHTML = all.map(b => `
+      <div class="b-item">
+        <div class="b-item-l">
+          <div class="bi-t">${b.direction === 'given' ? '✦ You gave' : '🌿 You received'} — ${typeLabels[b.blessing_type] || b.blessing_type}</div>
+          <div class="bi-d">${new Date(b.created_at).toLocaleDateString('en-AU', { day:'numeric', month:'short', year:'numeric' })}</div>
+        </div>
+        <span class="b-status ${statusClass[b.status] || 'bs-pending'}">${b.status}</span>
+      </div>`).join('');
+  } catch(e) { console.error(e); }
+}
+
+// ── STATS COUNTER ──
+function animateCounters() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      document.querySelectorAll('[data-target]').forEach(el => {
+        const target = parseInt(el.dataset.target);
+        const suffix = el.dataset.suffix || '';
+        const start = performance.now();
+        const dur = 1800;
+        function upd(now) {
+          const p = Math.min((now - start) / dur, 1);
+          const v = Math.round((1 - Math.pow(1-p, 3)) * target);
+          el.textContent = v.toLocaleString() + suffix;
+          if (p < 1) requestAnimationFrame(upd);
+        }
+        requestAnimationFrame(upd);
+      });
+      obs.disconnect();
+    });
+  }, { threshold: .3 });
+  const bar = document.querySelector('.stats-bar');
+  if (bar) obs.observe(bar);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { closeAuth(); closeBlessing(); }
+});
+</script>
+</body>
+</html>
