@@ -11,8 +11,9 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.handler = async (event) => {
+  const allowedOrigin = process.env.APP_URL || '*';
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
   };
@@ -20,12 +21,14 @@ exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return { statusCode: 200, headers, body: '' };
 
   // Auth check
-  const token = (event.headers.authorization || '').replace('Bearer ', '');
+  const token = (event.headers.authorization || '').split(' ')[1];
+  if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Not authenticated' }) };
+
   const { data: { user } } = await supabase.auth.getUser(token);
   if (!user) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Not authenticated' }) };
 
   const { action, blessing_id, delivery_detail, message_content } = JSON.parse(event.body || '{}');
-  const pathId = event.path.split('/').pop(); // for GET /api/blessings/{id}
+  const pathId = event.path.split('/').pop();
 
   try {
     // ── GET A BLESSING ──
@@ -43,12 +46,10 @@ exports.handler = async (event) => {
 
       if (!blessing) return { statusCode: 404, headers, body: JSON.stringify({ error: 'Blessing not found' }) };
 
-      // Only show to participants
       if (blessing.giver_id !== user.id && blessing.receiver_id !== user.id) {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Not authorised' }) };
       }
 
-      // Get messages
       const { data: messages } = await supabase
         .from('blessing_messages')
         .select('*, sender:sender_id(display_name, avatar_emoji)')
@@ -60,21 +61,22 @@ exports.handler = async (event) => {
 
     // ── DELIVER (giver sends their blessing details) ──
     if (action === 'deliver') {
+      if (!blessing_id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'blessing_id required' }) };
+      if (!delivery_detail || typeof delivery_detail !== 'string' || delivery_detail.trim().length === 0) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'delivery_detail required' }) };
+      }
+
       const { data: blessing } = await supabase.from('blessings').select('*').eq('id', blessing_id).single();
       if (!blessing || blessing.giver_id !== user.id) {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Not authorised' }) };
       }
 
       await supabase.from('blessings')
-        .update({ status: 'delivered', delivery_detail, delivered_at: new Date().toISOString() })
+        .update({ status: 'delivered', delivery_detail: delivery_detail.trim(), delivered_at: new Date().toISOString() })
         .eq('id', blessing_id);
 
-      // Update giver stats
-      await supabase.from('profiles')
-        .update({ blessings_given: supabase.raw('blessings_given + 1') })
-        .eq('id', user.id);
+      await supabase.rpc('increment_blessings_given', { uid: user.id });
 
-      // Notify receiver
       const { data: receiverUser } = await supabase.auth.admin.getUserById(blessing.receiver_id);
       if (receiverUser?.user?.email) {
         const appUrl = process.env.APP_URL || 'https://yourdomain.com';
@@ -98,29 +100,39 @@ exports.handler = async (event) => {
 
     // ── ACKNOWLEDGE (receiver confirms they received it) ──
     if (action === 'acknowledge') {
+      if (!blessing_id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'blessing_id required' }) };
+
+      const { data: blessing } = await supabase.from('blessings').select('receiver_id').eq('id', blessing_id).single();
+      if (!blessing || blessing.receiver_id !== user.id) {
+        return { statusCode: 403, headers, body: JSON.stringify({ error: 'Not authorised' }) };
+      }
+
       await supabase.from('blessings')
         .update({ status: 'acknowledged', acknowledged_at: new Date().toISOString() })
-        .eq('id', blessing_id)
-        .eq('receiver_id', user.id);
+        .eq('id', blessing_id);
 
-      // Update receiver stats
-      await supabase.from('profiles')
-        .update({ blessings_received: supabase.raw('blessings_received + 1') })
-        .eq('id', user.id);
+      await supabase.rpc('increment_blessings_received', { uid: user.id });
 
       return { statusCode: 200, headers, body: JSON.stringify({ success: true }) };
     }
 
     // ── SEND MESSAGE (in-platform anonymous messaging) ──
     if (action === 'message') {
-      // Verify user is part of this blessing
+      if (!blessing_id) return { statusCode: 400, headers, body: JSON.stringify({ error: 'blessing_id required' }) };
+      if (!message_content || typeof message_content !== 'string' || message_content.trim().length === 0) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'message_content required' }) };
+      }
+      if (message_content.length > 1000) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Message too long' }) };
+      }
+
       const { data: blessing } = await supabase.from('blessings').select('*').eq('id', blessing_id).single();
       if (!blessing || (blessing.giver_id !== user.id && blessing.receiver_id !== user.id)) {
         return { statusCode: 403, headers, body: JSON.stringify({ error: 'Not authorised' }) };
       }
 
       const { data: msg } = await supabase.from('blessing_messages')
-        .insert({ blessing_id, sender_id: user.id, content: message_content })
+        .insert({ blessing_id, sender_id: user.id, content: message_content.trim() })
         .select('*, sender:sender_id(display_name, avatar_emoji)')
         .single();
 
@@ -129,15 +141,16 @@ exports.handler = async (event) => {
 
     // ── GET MY BLESSINGS (dashboard) ──
     if (action === 'my-blessings') {
-      const { data: given } = await supabase.from('blessings')
-        .select('*, receiver:receiver_id(display_name, avatar_emoji, country)')
-        .eq('giver_id', user.id)
-        .order('created_at', { ascending: false });
-
-      const { data: received } = await supabase.from('blessings')
-        .select('*, giver:giver_id(display_name, avatar_emoji, country)')
-        .eq('receiver_id', user.id)
-        .order('created_at', { ascending: false });
+      const [{ data: given }, { data: received }] = await Promise.all([
+        supabase.from('blessings')
+          .select('*, receiver:receiver_id(display_name, avatar_emoji, country)')
+          .eq('giver_id', user.id)
+          .order('created_at', { ascending: false }),
+        supabase.from('blessings')
+          .select('*, giver:giver_id(display_name, avatar_emoji, country)')
+          .eq('receiver_id', user.id)
+          .order('created_at', { ascending: false })
+      ]);
 
       return {
         statusCode: 200, headers,

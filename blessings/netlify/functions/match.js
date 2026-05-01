@@ -12,8 +12,9 @@ const supabase = createClient(
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 exports.handler = async (event) => {
+  const allowedOrigin = process.env.APP_URL || '*';
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
   };
@@ -23,12 +24,23 @@ exports.handler = async (event) => {
   const authHeader = event.headers.authorization;
   if (!authHeader) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Not authenticated' }) };
 
-  // Verify the user token
-  const token = authHeader.replace('Bearer ', '');
+  const token = authHeader.split(' ')[1];
+  if (!token) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Not authenticated' }) };
+
   const { data: { user }, error: authError } = await supabase.auth.getUser(token);
   if (authError || !user) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid session' }) };
 
   const { mode, blessing_type, message } = JSON.parse(event.body || '{}');
+
+  if (!mode || !['give', 'receive'].includes(mode)) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid mode' }) };
+  }
+  if (!blessing_type || typeof blessing_type !== 'string' || blessing_type.length > 50) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Invalid blessing type' }) };
+  }
+  if (message && (typeof message !== 'string' || message.length > 500)) {
+    return { statusCode: 400, headers, body: JSON.stringify({ error: 'Message too long' }) };
+  }
 
   try {
     // ── ADD TO QUEUE ──
@@ -47,20 +59,10 @@ exports.handler = async (event) => {
     if (queueError) throw queueError;
 
     // ── TRY TO MATCH ──
+    // Prefer same blessing type, fall back to any
     const oppositeMode = mode === 'give' ? 'receive' : 'give';
+    const now = new Date().toISOString();
 
-    // Find compatible match: compatible type, not the same user, waiting status
-    let matchQuery = supabase
-      .from('blessing_queue')
-      .select('*, profiles!blessing_queue_user_id_fkey(display_name, country, avatar_emoji)')
-      .eq('mode', oppositeMode)
-      .eq('status', 'waiting')
-      .neq('user_id', user.id)
-      .gt('expires_at', new Date().toISOString())
-      .order('created_at', { ascending: true })
-      .limit(1);
-
-    // Prefer same blessing type, but fall back to any
     const { data: sameTypeMatches } = await supabase
       .from('blessing_queue')
       .select('*, profiles!blessing_queue_user_id_fkey(display_name, country, avatar_emoji)')
@@ -68,18 +70,25 @@ exports.handler = async (event) => {
       .eq('status', 'waiting')
       .eq('blessing_type', blessing_type)
       .neq('user_id', user.id)
-      .gt('expires_at', new Date().toISOString())
+      .gt('expires_at', now)
       .order('created_at', { ascending: true })
       .limit(1);
 
-    const { data: anyMatches } = await matchQuery;
+    const { data: anyMatches } = await supabase
+      .from('blessing_queue')
+      .select('*, profiles!blessing_queue_user_id_fkey(display_name, country, avatar_emoji)')
+      .eq('mode', oppositeMode)
+      .eq('status', 'waiting')
+      .neq('user_id', user.id)
+      .gt('expires_at', now)
+      .order('created_at', { ascending: true })
+      .limit(1);
 
-    const match = (sameTypeMatches && sameTypeMatches.length > 0)
+    const candidate = (sameTypeMatches?.length > 0)
       ? sameTypeMatches[0]
-      : (anyMatches && anyMatches.length > 0 ? anyMatches[0] : null);
+      : (anyMatches?.length > 0 ? anyMatches[0] : null);
 
-    if (!match) {
-      // No match yet — stay in queue, notify when one arrives
+    if (!candidate) {
       return {
         statusCode: 200, headers,
         body: JSON.stringify({
@@ -90,20 +99,41 @@ exports.handler = async (event) => {
       };
     }
 
-    // ── MATCH FOUND ──
-    const giverId = mode === 'give' ? user.id : match.user_id;
-    const receiverId = mode === 'give' ? match.user_id : user.id;
-    const giverQueueId = mode === 'give' ? queueEntry.id : match.id;
-    const receiverQueueId = mode === 'give' ? match.id : queueEntry.id;
+    // ── ATOMICALLY CLAIM THE MATCH ──
+    // Only succeeds if nobody else claimed it between our SELECT and now
+    const { data: claimedMatch } = await supabase
+      .from('blessing_queue')
+      .update({ status: 'matched' })
+      .eq('id', candidate.id)
+      .eq('status', 'waiting')
+      .select('*, profiles!blessing_queue_user_id_fkey(display_name, country, avatar_emoji)')
+      .maybeSingle();
 
-    // Create the blessing record
+    if (!claimedMatch) {
+      // Race lost — someone else claimed this match; stay queued
+      return {
+        statusCode: 200, headers,
+        body: JSON.stringify({
+          status: 'queued',
+          queue_id: queueEntry.id,
+          message: "You're in the queue! We'll email you when your match is found."
+        })
+      };
+    }
+
+    // ── BUILD BLESSING ──
+    const giverId = mode === 'give' ? user.id : claimedMatch.user_id;
+    const receiverId = mode === 'give' ? claimedMatch.user_id : user.id;
+    const giverQueueId = mode === 'give' ? queueEntry.id : claimedMatch.id;
+    const receiverQueueId = mode === 'give' ? claimedMatch.id : queueEntry.id;
+
     const { data: blessing, error: blessingError } = await supabase
       .from('blessings')
       .insert({
         giver_id: giverId,
         receiver_id: receiverId,
-        blessing_type: mode === 'give' ? blessing_type : match.blessing_type,
-        message: mode === 'give' ? message : match.message,
+        blessing_type: mode === 'give' ? blessing_type : claimedMatch.blessing_type,
+        message: mode === 'give' ? message : claimedMatch.message,
         status: 'pending'
       })
       .select()
@@ -111,31 +141,29 @@ exports.handler = async (event) => {
 
     if (blessingError) throw blessingError;
 
-    // Mark both queue entries as matched
-    await supabase.from('blessing_queue')
-      .update({ status: 'matched', matched_with: receiverQueueId })
-      .eq('id', giverQueueId);
+    // Mark both queue entries as matched with each other
+    await Promise.all([
+      supabase.from('blessing_queue')
+        .update({ status: 'matched', matched_with: receiverQueueId })
+        .eq('id', giverQueueId),
+      supabase.from('blessing_queue')
+        .update({ matched_with: giverQueueId })
+        .eq('id', receiverQueueId)
+    ]);
 
-    await supabase.from('blessing_queue')
-      .update({ status: 'matched', matched_with: giverQueueId })
-      .eq('id', receiverQueueId);
+    // Get auth emails for notifications
+    const [{ data: giverUser }, { data: receiverUser }] = await Promise.all([
+      supabase.auth.admin.getUserById(giverId),
+      supabase.auth.admin.getUserById(receiverId)
+    ]);
 
-    // Get profiles for email
-    const { data: giverProfile } = await supabase.from('profiles').select('*').eq('id', giverId).single();
-    const { data: receiverProfile } = await supabase.from('profiles').select('*').eq('id', receiverId).single();
-
-    const { data: giverUser } = await supabase.auth.admin.getUserById(giverId);
-    const { data: receiverUser } = await supabase.auth.admin.getUserById(receiverId);
-
-    // Send emails (don't block on failure)
     try {
       await sendMatchEmails({
         giverEmail: giverUser?.user?.email,
         receiverEmail: receiverUser?.user?.email,
-        giverProfile,
-        receiverProfile,
         blessing,
-        blessingId: blessing.id
+        blessingId: blessing.id,
+        matchProfile: claimedMatch.profiles
       });
     } catch (emailErr) {
       console.error('Email send failed (non-fatal):', emailErr);
@@ -147,9 +175,9 @@ exports.handler = async (event) => {
         status: 'matched',
         blessing_id: blessing.id,
         match: {
-          display_name: match.profiles?.display_name || 'Anonymous Soul',
-          country: match.profiles?.country || 'Somewhere in the world',
-          avatar_emoji: match.profiles?.avatar_emoji || '🌟'
+          display_name: claimedMatch.profiles?.display_name || 'Anonymous Soul',
+          country: claimedMatch.profiles?.country || 'Somewhere in the world',
+          avatar_emoji: claimedMatch.profiles?.avatar_emoji || '🌟'
         }
       })
     };
@@ -161,7 +189,7 @@ exports.handler = async (event) => {
 };
 
 // ── EMAIL NOTIFICATIONS ──
-async function sendMatchEmails({ giverEmail, receiverEmail, giverProfile, receiverProfile, blessing, blessingId }) {
+async function sendMatchEmails({ giverEmail, receiverEmail, blessing, blessingId }) {
   const appUrl = process.env.APP_URL || 'https://yourdomain.com';
   const fromEmail = process.env.FROM_EMAIL || 'blessings@yourdomain.com';
   const fromName = process.env.FROM_NAME || 'Blessings';
@@ -178,9 +206,10 @@ async function sendMatchEmails({ giverEmail, receiverEmail, giverProfile, receiv
 
   const blessingLabel = typeLabels[blessing.blessing_type] || '✦ A blessing';
 
-  // Email to GIVER
+  const sends = [];
+
   if (giverEmail) {
-    await resend.emails.send({
+    sends.push(resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: giverEmail,
       subject: '✦ Your match is ready — someone is waiting for your blessing',
@@ -192,12 +221,11 @@ async function sendMatchEmails({ giverEmail, receiverEmail, giverProfile, receiv
         ctaUrl: `${appUrl}/blessing/${blessingId}`,
         footer: 'Thank you for being the reason someone smiles today.'
       })
-    });
+    }));
   }
 
-  // Email to RECEIVER
   if (receiverEmail) {
-    await resend.emails.send({
+    sends.push(resend.emails.send({
       from: `${fromName} <${fromEmail}>`,
       to: receiverEmail,
       subject: '🌿 A blessing is on its way to you',
@@ -209,11 +237,14 @@ async function sendMatchEmails({ giverEmail, receiverEmail, giverProfile, receiv
         ctaUrl: `${appUrl}/blessing/${blessingId}`,
         footer: 'You deserve this. When you feel ready, you can pass a blessing forward to someone else.'
       })
-    });
+    }));
   }
+
+  await Promise.all(sends);
 }
 
 function emailTemplate({ heading, body, detail, ctaText, ctaUrl, footer }) {
+  const appUrl = process.env.APP_URL || 'https://yourdomain.com';
   return `
 <!DOCTYPE html>
 <html>
@@ -231,7 +262,7 @@ function emailTemplate({ heading, body, detail, ctaText, ctaUrl, footer }) {
       <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(135deg,#C49A3C,#D4854A);color:white;text-decoration:none;padding:14px 32px;border-radius:100px;font-family:sans-serif;font-size:0.95rem;font-weight:500;">${ctaText}</a>
     </div>
     <p style="text-align:center;color:#9C8870;font-size:0.82rem;margin-top:24px;line-height:1.6;">${footer}</p>
-    <p style="text-align:center;color:#C8C0B8;font-size:0.75rem;margin-top:16px;">You're receiving this because you joined Blessings. <a href="${process.env.APP_URL}/unsubscribe" style="color:#C49A3C;">Unsubscribe</a></p>
+    <p style="text-align:center;color:#C8C0B8;font-size:0.75rem;margin-top:16px;">You're receiving this because you joined Blessings. <a href="${appUrl}/unsubscribe" style="color:#C49A3C;">Unsubscribe</a></p>
   </div>
 </body>
 </html>`;

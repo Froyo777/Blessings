@@ -112,3 +112,15 @@ SELECT
   (SELECT COUNT(*) FROM blessings WHERE status != 'pending') AS total_blessings,
   (SELECT COUNT(DISTINCT giver_id) + COUNT(DISTINCT receiver_id) FROM blessings) AS total_users,
   (SELECT COUNT(*) FROM blessing_queue WHERE status = 'waiting') AS waiting_to_receive;
+
+-- ── ATOMIC INCREMENT HELPERS ──
+-- Called via supabase.rpc() to safely increment counters without a fetch-then-write race
+CREATE OR REPLACE FUNCTION increment_blessings_given(uid UUID)
+RETURNS VOID AS $$
+  UPDATE profiles SET blessings_given = blessings_given + 1 WHERE id = uid;
+$$ LANGUAGE SQL SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION increment_blessings_received(uid UUID)
+RETURNS VOID AS $$
+  UPDATE profiles SET blessings_received = blessings_received + 1 WHERE id = uid;
+$$ LANGUAGE SQL SECURITY DEFINER;

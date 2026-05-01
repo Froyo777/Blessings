@@ -9,8 +9,9 @@ const supabase = createClient(
 );
 
 exports.handler = async (event) => {
+  const allowedOrigin = process.env.APP_URL || '*';
   const headers = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Content-Type': 'application/json'
   };
@@ -24,13 +25,22 @@ exports.handler = async (event) => {
   try {
     // ── SIGN UP ──
     if (action === 'signup') {
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: error.message }) };
+      if (!email || typeof email !== 'string' || !email.includes('@')) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'A valid email is required.' }) };
+      }
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Password must be at least 8 characters.' }) };
+      }
+      if (name && (typeof name !== 'string' || name.length > 50)) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Name must be 50 characters or fewer.' }) };
+      }
 
-      // Update profile with name and country
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) return { statusCode: 400, headers, body: JSON.stringify({ error: 'Could not create account. Please try again.' }) };
+
       if (data.user) {
         await supabase.from('profiles').update({
-          display_name: name || email.split('@')[0],
+          display_name: (name || email.split('@')[0]).slice(0, 50),
           country: country || null,
           avatar_emoji: pickEmoji()
         }).eq('id', data.user.id);
@@ -47,6 +57,10 @@ exports.handler = async (event) => {
 
     // ── SIGN IN ──
     if (action === 'signin') {
+      if (!email || !password) {
+        return { statusCode: 400, headers, body: JSON.stringify({ error: 'Email and password are required.' }) };
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { statusCode: 401, headers, body: JSON.stringify({ error: 'Invalid email or password.' }) };
 

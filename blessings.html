@@ -960,15 +960,104 @@
 
   .footer-heart { color: var(--amber); }
 
+  /* ── HAMBURGER ── */
+  .nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+  }
+
+  .nav-hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--mid);
+    border-radius: 2px;
+    transition: all 0.25s ease;
+  }
+
+  .nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .nav-hamburger.open span:nth-child(2) { opacity: 0; }
+  .nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+  /* ── MOBILE NAV DRAWER ── */
+  .nav-drawer {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: rgba(250, 246, 239, 0.97);
+    backdrop-filter: blur(12px);
+    padding: 5rem 2rem 2rem;
+    z-index: 99;
+    flex-direction: column;
+    gap: 0.4rem;
+    border-bottom: 1px solid rgba(196,154,60,0.15);
+  }
+
+  .nav-drawer.open { display: flex; }
+
+  .nav-drawer a {
+    text-decoration: none;
+    color: var(--mid);
+    font-size: 1.1rem;
+    font-weight: 400;
+    letter-spacing: 0.04em;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(196,154,60,0.1);
+    transition: color 0.2s;
+  }
+
+  .nav-drawer a:hover { color: var(--gold); }
+
   /* ── RESPONSIVE ── */
   @media (max-width: 768px) {
     nav { padding: 1.2rem 1.5rem; }
     .nav-links { display: none; }
+    .nav-hamburger { display: flex; }
     .philosophy-grid { grid-template-columns: 1fr; gap: 2.5rem; }
     .stats-bar { gap: 2.5rem; }
     .modal { padding: 2rem 1.5rem; }
     .blessing-options { grid-template-columns: 1fr 1fr; }
     .footer-top { flex-direction: column; }
+  }
+
+  /* ── GIVE SENT SUMMARY ── */
+  .blessing-sent-summary {
+    background: rgba(196,154,60,0.08);
+    border-radius: 16px;
+    padding: 1.2rem;
+    margin: 1.5rem 0;
+    text-align: left;
+  }
+
+  .blessing-sent-label {
+    font-size: 0.8rem;
+    color: var(--soft);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+
+  .blessing-sent-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--mid);
+  }
+
+  .give-success-screen {
+    text-align: center;
+    padding: 1rem 0;
+  }
+
+  .give-success-footer {
+    font-size: 0.85rem;
+    color: var(--soft);
+    line-height: 1.6;
   }
 
   /* ── SUCCESS ANIMATION ── */
@@ -1037,7 +1126,18 @@
     <li><a href="#stories">Stories</a></li>
     <li><a href="#action">Get started</a></li>
   </ul>
+  <button class="nav-hamburger" id="navHamburger" aria-label="Open menu" aria-expanded="false" aria-controls="navDrawer">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBILE NAV DRAWER -->
+<div class="nav-drawer" id="navDrawer" role="navigation" aria-label="Mobile navigation">
+  <a href="#how" onclick="closeDrawer()">How it works</a>
+  <a href="#types" onclick="closeDrawer()">Blessings</a>
+  <a href="#stories" onclick="closeDrawer()">Stories</a>
+  <a href="#action" onclick="closeDrawer()">Get started</a>
+</div>
 
 <!-- HERO -->
 <section class="hero">
@@ -1075,7 +1175,7 @@
     <span class="stat-label">Countries connected</span>
   </div>
   <div class="stat">
-    <span class="stat-number" data-target="98">0</span>
+    <span class="stat-number" data-target="98" data-suffix="%">0</span>
     <span class="stat-label">% feel more hopeful</span>
   </div>
   <div class="stat">
@@ -1320,16 +1420,16 @@
 </footer>
 
 <!-- ══════════════════════════════════ MODAL ══════════════════════════════════ -->
-<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
-  <div class="modal" id="mainModal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)" role="presentation">
+  <div class="modal" id="mainModal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
+    <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
 
     <!-- ════════ GIVE FLOW ════════ -->
     <div id="giveFlow">
       <!-- Step 1: Choose blessing type -->
       <div class="modal-step active" id="give-s1">
         <span class="modal-icon">✦</span>
-        <div class="modal-title">Give a Blessing</div>
+        <div class="modal-title" id="modalHeading">Give a Blessing</div>
         <p class="modal-subtitle">Choose what you'd like to offer to someone who needs it.</p>
 
         <div class="form-group">
@@ -1427,16 +1527,16 @@
 
       <!-- Step 4: Sent! -->
       <div class="modal-step" id="give-s4">
-        <div style="text-align:center;padding:1rem 0;">
+        <div class="give-success-screen">
           <span class="success-burst">✦</span>
-          <div class="modal-title" style="margin-bottom:0.5rem;">Blessing sent! 🌟</div>
+          <div class="modal-title">Blessing sent! 🌟</div>
           <p class="modal-subtitle">Your kindness is on its way to someone who needed it today. Thank you for being part of something beautiful.</p>
-          <div style="background:rgba(196,154,60,0.08);border-radius:16px;padding:1.2rem;margin:1.5rem 0;text-align:left;">
-            <div style="font-size:0.8rem;color:var(--soft);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:0.4rem;">Your blessing</div>
-            <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:var(--mid)" id="blessingSent"></div>
+          <div class="blessing-sent-summary">
+            <div class="blessing-sent-label">Your blessing</div>
+            <div class="blessing-sent-text" id="blessingSent"></div>
           </div>
-          <p style="font-size:0.85rem;color:var(--soft);line-height:1.6;">When your recipient is ready, they may pass a blessing forward — to someone entirely new. The circle continues. 🌱</p>
-          <button class="modal-btn modal-btn-primary" onclick="closeModal()" style="margin-top:1.5rem;">Done ✓</button>
+          <p class="give-success-footer">When your recipient is ready, they may pass a blessing forward — to someone entirely new. The circle continues. 🌱</p>
+          <button class="modal-btn modal-btn-primary" onclick="closeModal()">Done ✓</button>
         </div>
       </div>
     </div>
@@ -1534,13 +1634,20 @@
   let currentStep = 1;
 
   // ── MODAL CONTROLS ──
+  let _modalTrigger = null;
+
   function openModal(mode) {
     currentMode = mode;
     selectedBlessingType = null;
     currentStep = 1;
+    _modalTrigger = document.activeElement;
 
     document.getElementById('giveFlow').style.display = mode === 'give' ? 'block' : 'none';
     document.getElementById('receiveFlow').style.display = mode === 'receive' ? 'block' : 'none';
+
+    // Update the accessible heading for each flow
+    document.getElementById('modalHeading').textContent =
+      mode === 'give' ? 'Give a Blessing' : 'Receive a Blessing';
 
     // Reset steps
     document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
@@ -1561,11 +1668,18 @@
 
     document.getElementById('modalOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // Move focus into modal
+    requestAnimationFrame(() => {
+      const closeBtn = document.querySelector('.modal-close');
+      if (closeBtn) closeBtn.focus();
+    });
   }
 
   function closeModal() {
     document.getElementById('modalOverlay').classList.remove('active');
     document.body.style.overflow = '';
+    if (_modalTrigger) { _modalTrigger.focus(); _modalTrigger = null; }
   }
 
   function handleOverlayClick(e) {
@@ -1654,6 +1768,7 @@
   function animateCounters() {
     document.querySelectorAll('[data-target]').forEach(el => {
       const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
       const duration = 2000;
       const start = performance.now();
 
@@ -1662,12 +1777,8 @@
         const progress = Math.min(elapsed / duration, 1);
         const eased = 1 - Math.pow(1 - progress, 3);
         const value = Math.round(eased * target);
-        el.textContent = value.toLocaleString();
+        el.textContent = value.toLocaleString() + (progress === 1 ? suffix : '');
         if (progress < 1) requestAnimationFrame(update);
-        else {
-          // Add % or + suffix
-          if (el.dataset.target === '98') el.textContent = '98%';
-        }
       }
       requestAnimationFrame(update);
     });
@@ -1685,8 +1796,54 @@
 
   statsObserver.observe(document.querySelector('.stats-bar'));
 
-  // ── ESC KEY ──
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+  // ── ESC KEY + FOCUS TRAP ──
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      if (document.getElementById('navDrawer').classList.contains('open')) {
+        closeDrawer();
+      } else {
+        closeModal();
+      }
+      return;
+    }
+
+    // Focus trap inside open modal
+    if (e.key === 'Tab' && document.getElementById('modalOverlay').classList.contains('active')) {
+      const focusable = Array.from(
+        document.getElementById('mainModal').querySelectorAll(
+          'button, input, select, textarea, [href], [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter(el => !el.disabled && el.offsetParent !== null);
+
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
+  // ── HAMBURGER ──
+  const hamburger = document.getElementById('navHamburger');
+  const drawer = document.getElementById('navDrawer');
+
+  hamburger.addEventListener('click', () => {
+    const isOpen = drawer.classList.toggle('open');
+    hamburger.classList.toggle('open', isOpen);
+    hamburger.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    hamburger.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+  }
 </script>
 </body>
 </html>
